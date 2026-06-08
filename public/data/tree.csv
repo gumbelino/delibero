@@ -1,0 +1,13 @@
+node_id,parent_id,question_id,match,recommend
+n1,,participants,>=10000,
+n2,n1,modes,online,AsyncStructured
+n3,n1,modes,hybrid,DistributedSmallGroup
+n4,n1,modes,face-to-face,DistributedSmallGroup
+n5,,participants,>=1000,DistributedSmallGroup
+n6,,stages-focus,output-generation,LayeredMeta
+n7,,stages-focus,solution,LayeredMeta
+n8,,engagement-depth,empower,LayeredMeta
+n9,,diversity,any,MultimodalInclusive
+n10,,modes,online,MultimodalInclusive
+n11,,engagement-calc,ratio<0.1,GamifiedEngagement
+n12,,resources,online-tool,AsyncStructured
