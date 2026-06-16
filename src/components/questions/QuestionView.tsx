@@ -1,5 +1,5 @@
 import type { Question, AnswerValue } from "../../types";
-import { CITATIONS } from "../../data/content";
+import { CITATIONS, IAP2_URL } from "../../data/content";
 import { SingleSelect } from "./SingleSelect";
 import { MultiSelect } from "./MultiSelect";
 import { NonLinearScale } from "./NonLinearScale";
@@ -42,7 +42,15 @@ export function QuestionView({ question, value, onChange }: Props) {
       {question.type === "info" && <InfoPanel question={question} />}
 
       {question.citation && CITATIONS[question.citation] && (
-        <p className="question-cite">{CITATIONS[question.citation]}</p>
+        <p className="question-cite">
+          {question.citation === "iap2" ? (
+            <a href={IAP2_URL} target="_blank" rel="noopener noreferrer">
+              {CITATIONS[question.citation]}
+            </a>
+          ) : (
+            CITATIONS[question.citation]
+          )}
+        </p>
       )}
     </section>
   );

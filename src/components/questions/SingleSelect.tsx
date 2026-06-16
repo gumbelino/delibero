@@ -20,8 +20,10 @@ export function SingleSelect({ question, value, onChange }: Props) {
             className={selected ? "option option-selected" : "option"}
             onClick={() => onChange(opt.value)}
           >
-            <span className="option-label">{opt.label}</span>
-            {opt.description && <span className="option-desc">{opt.description}</span>}
+            <span className="option-body">
+              <span className="option-label">{opt.label}</span>
+              {opt.description && <span className="option-desc">{opt.description}</span>}
+            </span>
           </button>
         );
       })}

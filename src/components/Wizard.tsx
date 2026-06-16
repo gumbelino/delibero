@@ -33,9 +33,11 @@ export function Wizard() {
       />
 
       <div className="wizard-nav">
-        <button type="button" className="btn btn-ghost" onClick={back} disabled={isFirst}>
-          Back
-        </button>
+        {!isFirst && (
+          <button type="button" className="btn btn-ghost" onClick={back}>
+            Back
+          </button>
+        )}
         <button type="button" className="btn btn-primary" onClick={next}>
           {isLast ? "See recommendations" : "Next"}
         </button>

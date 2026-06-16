@@ -26,6 +26,10 @@ export interface QuestionOption {
   description?: string;
   /** Optional citation key (see content.ts CITATIONS). */
   citation?: string;
+  /** Optional group heading for grouped multi-select questions. */
+  group?: string;
+  /** Optional color (hex) for ranked-choice goal items. */
+  color?: string;
 }
 
 export interface Question {
@@ -42,6 +46,8 @@ export interface Question {
   citation?: string;
   /** Rich educational content key for `info` questions (see content.ts). */
   infoKey?: string;
+  /** If true, render an optional CHF budget number input alongside the options. */
+  budgetInput?: boolean;
 }
 
 /**
@@ -51,8 +57,9 @@ export interface Question {
  * - single:     string (selected option value)
  * - multi:      string[] (selected option values)
  * - numberPair: Record<string, number>
+ * - number:     plain number (e.g. optional budget field)
  */
-export type AnswerValue = string | string[] | Record<string, number>;
+export type AnswerValue = string | string[] | Record<string, number> | number;
 
 export type Answers = Record<string, AnswerValue>;
 

@@ -1,6 +1,6 @@
-// Educational content shown in the wizard: trade-offs, the IAP2 spectrum,
-// principle definitions, and the citation map. Editing copy here does not
-// touch component code.
+// Educational content shown in the wizard: the IAP2 spectrum,
+// principle definitions, goal colors, and the citation map. Editing copy here
+// does not touch component code.
 
 import type { PrincipleId } from "../types";
 
@@ -10,7 +10,19 @@ export const CITATIONS: Record<string, string> = {
   "25": "On diversity vs. depth in scaling deliberation [25].",
   "30": "On consequentiality vs. engagement in scaling deliberation [30].",
   "34": "On identity vs. anonymity in scaling deliberation [34].",
-  iap2: "EPA — Public Participation Guide: Selecting the Right Level of Public Participation. https://www.epa.gov/international-cooperation/public-participation-guide-selecting-right-level-public-participation",
+  iap2: "IAP2 Spectrum of Public Participation",
+};
+
+export const IAP2_URL =
+  "https://www.iap2.org/page/pillars";
+
+/** Color for each deliberative principle/goal — single source of truth used across the app. */
+export const GOAL_COLORS: Record<PrincipleId, string> = {
+  Inclusion: "#2563EB",
+  Plurality: "#16A34A",
+  Equality: "#EA580C",
+  Reflection: "#7C3AED",
+  Authenticity: "#DC2626",
 };
 
 /** Plain-language definitions of the five deliberative principles. */

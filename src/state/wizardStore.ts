@@ -10,6 +10,7 @@ interface WizardState {
   step: number; // index into QUESTIONS
   answers: Answers;
   showResults: boolean;
+  showLanding: boolean;
 
   setAnswer: (questionId: string, value: AnswerValue) => void;
   next: () => void;
@@ -17,12 +18,15 @@ interface WizardState {
   goTo: (step: number) => void;
   viewResults: () => void;
   reset: () => void;
+  start: () => void;
+  goHome: () => void;
 }
 
 export const useWizard = create<WizardState>((set) => ({
   step: 0,
   answers: {},
   showResults: false,
+  showLanding: true,
 
   setAnswer: (questionId, value) =>
     set((s) => ({ answers: { ...s.answers, [questionId]: value } })),
@@ -47,5 +51,9 @@ export const useWizard = create<WizardState>((set) => ({
 
   viewResults: () => set(() => ({ showResults: true })),
 
-  reset: () => set(() => ({ step: 0, answers: {}, showResults: false })),
+  reset: () => set(() => ({ step: 0, answers: {}, showResults: false, showLanding: false })),
+
+  start: () => set(() => ({ showLanding: false, showResults: false })),
+
+  goHome: () => set(() => ({ showLanding: true, showResults: false })),
 }));
