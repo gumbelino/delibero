@@ -1,97 +1,104 @@
-import type { Template, TreeNode } from "../../types";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCircleQuestion } from "@fortawesome/free-solid-svg-icons";
+import type { Template, TreeNode, RecommendationRow } from "../../types";
 import { useWizard } from "../../state/wizardStore";
+import { matchRecommendations } from "../../engine/match";
 import { ContactForm } from "./ContactForm";
 
 interface Props {
   templates: Template[];
   tree: TreeNode[];
+  recommendations: RecommendationRow[];
 }
 
-interface PlaceholderCard {
-  title: string;
-  body: string;
-}
-
-function getPlaceholders(answers: Record<string, unknown>): PlaceholderCard[] {
-  const cards: PlaceholderCard[] = [];
-
-  const modes = answers["modes"] as string | undefined;
-  if (modes === "face-to-face") {
-    cards.push({
-      title: "Face-to-face deliberation",
-      body: "Face-to-face formats may cost more, but can also increase participation quality if recruitment is done carefully — in-person settings tend to foster richer discussion and stronger trust between participants.",
-    });
-  } else if (modes === "online") {
-    cards.push({
-      title: "Online deliberation",
-      body: "Online formats can reach more people at lower cost and allow asynchronous participation, though maintaining deliberative quality and engagement requires careful platform design.",
-    });
-  } else if (modes === "hybrid") {
-    cards.push({
-      title: "Hybrid deliberation",
-      body: "Combining online and face-to-face participation broadens reach while preserving the depth of in-person exchange — but requires extra coordination to ensure equitable participation across both modes.",
-    });
-  }
-
-  const criteria = answers["criteria"] as string | undefined;
-  if (criteria === "sortition") {
-    cards.push({
-      title: "Invited participants (sortition)",
-      body: "Inviting a randomly selected sample gives you more control over the demographics of participants, which can strengthen equality — but may reduce inclusion by limiting who can take part.",
-    });
-  } else if (criteria === "self-selection") {
-    cards.push({
-      title: "Open participation (self-selection)",
-      body: "Allowing anyone to participate can be more inclusive, but may reduce demographic equality. It is possible to achieve both through targeted outreach and recruitment strategies.",
-    });
-  }
-
-  return cards;
-}
-
-export function Results({ templates: _templates, tree: _tree }: Props) {
+export function Results({ templates: _templates, tree: _tree, recommendations }: Props) {
+  const navigate = useNavigate();
   const { answers, back, reset } = useWizard();
-  const placeholders = getPlaceholders(answers as Record<string, unknown>);
+  const [contactVisible, setContactVisible] = useState(true);
+
+  const matched = matchRecommendations(recommendations, answers as Record<string, unknown>);
 
   return (
     <div className="results">
+      {contactVisible && (
+        <div className="contact-card">
+          <button
+            type="button"
+            className="contact-card-close"
+            aria-label="Dismiss"
+            onClick={() => setContactVisible(false)}
+          >
+            ×
+          </button>
+          <p className="contact-card-title">Would you like help designing your process?</p>
+          <p className="contact-card-sub">
+            A team of researchers and deliberation designers will get in touch.
+          </p>
+          <ContactForm answers={answers} />
+        </div>
+      )}
+
       <header className="results-header">
-        <h2 className="results-title">Your process design</h2>
-        <p className="results-sub">
-          Based on your answers, here are some considerations for your deliberative process.
-        </p>
+        <div>
+          <h2 className="results-title">Your process design</h2>
+          <p className="results-sub">
+            Based on your answers, here are some considerations for your deliberative process.
+          </p>
+        </div>
+        {!contactVisible && (
+          <button
+            type="button"
+            className="contact-restore-btn"
+            aria-label="Get help designing your process"
+            title="Get help designing your process"
+            onClick={() => setContactVisible(true)}
+          >
+            <FontAwesomeIcon icon={faCircleQuestion} />
+          </button>
+        )}
       </header>
 
-      {placeholders.length > 0 && (
+      {matched.length > 0 && (
         <ol className="results-list">
-          {placeholders.map((card, i) => (
+          {matched.map(({ row, matchedOn }, i) => (
             <li key={i} className="rec-card">
               <div className="rec-head">
                 <span className="rec-rank">{i + 1}</span>
-                <h3 className="rec-name">{card.title}</h3>
+                <h3 className="rec-name">{row.name}</h3>
               </div>
-              <p className="rec-desc">{card.body}</p>
+              <p className="rec-desc">{row.description}</p>
+              {row.pros && (
+                <div className="rec-pros">
+                  <strong>Pros</strong>
+                  <p>{row.pros}</p>
+                </div>
+              )}
+              {row.cons && (
+                <div className="rec-cons">
+                  <strong>Cons</strong>
+                  <p>{row.cons}</p>
+                </div>
+              )}
+              <p className="rec-because">Because you selected: {matchedOn}</p>
             </li>
           ))}
         </ol>
       )}
 
-      <div className="contact-section">
-        <h2 className="contact-title">Would you like help designing your process?</h2>
-        <p className="contact-sub">
-          Enter your details below and a team of professional researchers and deliberation
-          designers will get in touch.
-        </p>
-        <ContactForm answers={answers} />
-      </div>
-
       <div className="results-actions no-print">
         <button type="button" className="btn btn-ghost" onClick={back}>
           Back to questions
         </button>
-        <button type="button" className="btn btn-ghost" onClick={reset}>
-          Start over
-        </button>
+        <div className="results-actions-right">
+          <button type="button" className="btn btn-ghost" onClick={reset}>
+            Start over
+          </button>
+          <button type="button" className="btn btn-primary" onClick={() => navigate("/recommendations")}>
+            See all recommendations
+          </button>
+        </div>
       </div>
     </div>
   );

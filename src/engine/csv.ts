@@ -1,7 +1,7 @@
 // Loads and parses the researcher-editable CSV data files.
 
 import Papa from "papaparse";
-import type { Template, TreeNode, PrincipleId } from "../types";
+import type { Template, TreeNode, PrincipleId, RecommendationRow } from "../types";
 
 const PRINCIPLE_SET: ReadonlySet<string> = new Set([
   "Inclusion",
@@ -73,22 +73,53 @@ export function parseTree(text: string): TreeNode[] {
     }));
 }
 
+export function parseRecommendations(text: string): RecommendationRow[] {
+  type Row = {
+    size: string;
+    level: string;
+    mode: string;
+    criteria: string;
+    name: string;
+    description: string;
+    stage: string;
+    principles: string;
+    pros: string;
+    cons: string;
+  };
+  return parseCsv<Row>(text)
+    .filter((r) => r.name)
+    .map((r) => ({
+      size: (r.size ?? "").trim(),
+      level: (r.level ?? "").trim(),
+      mode: (r.mode ?? "").trim(),
+      criteria: (r.criteria ?? "").trim(),
+      name: r.name.trim(),
+      description: (r.description ?? "").trim(),
+      stage: (r.stage ?? "").trim(),
+      principles: (r.principles ?? "").trim(),
+      pros: (r.pros ?? "").trim(),
+      cons: (r.cons ?? "").trim(),
+    }));
+}
+
 async function fetchText(url: string): Promise<string> {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Failed to load ${url}: ${res.status} ${res.statusText}`);
   return res.text();
 }
 
-/** Load both data files. Paths are relative to the deployed site root. */
+/** Load all data files. Paths are relative to the deployed site root. */
 export async function loadData(
   base = "data",
-): Promise<{ templates: Template[]; tree: TreeNode[] }> {
-  const [templatesText, treeText] = await Promise.all([
+): Promise<{ templates: Template[]; tree: TreeNode[]; recommendations: RecommendationRow[] }> {
+  const [templatesText, treeText, recommendationsText] = await Promise.all([
     fetchText(`${base}/templates.csv`),
     fetchText(`${base}/tree.csv`),
+    fetchText(`${base}/recommendations.csv`),
   ]);
   return {
     templates: parseTemplates(templatesText),
     tree: parseTree(treeText),
+    recommendations: parseRecommendations(recommendationsText),
   };
 }

@@ -103,6 +103,27 @@ export interface TreeReason {
   match: string;
 }
 
+/** A row from recommendations.csv. */
+export interface RecommendationRow {
+  size: string;
+  level: string;
+  mode: string;
+  criteria: string;
+  name: string;
+  description: string;
+  stage: string;
+  principles: string;
+  pros: string;
+  cons: string;
+}
+
+/** A recommendation matched against user answers. */
+export interface MatchedRecommendation {
+  row: RecommendationRow;
+  /** Human-readable attribution, e.g. "size: small" */
+  matchedOn: string;
+}
+
 /** A scored, explained recommendation produced by the engine. */
 export interface Recommendation {
   template: Template;

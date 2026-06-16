@@ -1,8 +1,7 @@
 import { QUESTIONS } from "../data/questions";
 import { useWizard } from "../state/wizardStore";
-import { QuestionView } from "./questions/QuestionView";
+import { QuestionView } from "../components/questions/QuestionView";
 
-/** The one-question-at-a-time wizard shell: progress, the question, and nav. */
 export function Wizard() {
   const { step, answers, setAnswer, next, back } = useWizard();
   const question = QUESTIONS[step];

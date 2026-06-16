@@ -8,34 +8,36 @@
 
 :root {
   /* Core palette — gray scale */
-  --color-bg:            #F2F2F2;
-  --color-surface:       #FFFFFF;
-  --color-ink:           #1C1C1C;
-  --color-ink-soft:      #4A4A4A;
-  --color-muted:         #767676;
-  --color-border:        #D4D4D4;
-  --color-primary:       #1C1C1C;
+  --color-bg: #f2f2f2;
+  --color-surface: #ffffff;
+  --color-ink: #1c1c1c;
+  --color-ink-soft: #4a4a4a;
+  --color-muted: #767676;
+  --color-border: #d4d4d4;
+  --color-primary: #1c1c1c;
   --color-primary-hover: #383838;
-  --color-primary-ink:   #FFFFFF;
-  --color-primary-soft:  #EBEBEB;
-  --color-accent:        #555555;
-  --color-error:         #C0392B;
-  --color-footer-bg:     #E8E8E8;
+  --color-primary-ink: #ffffff;
+  --color-primary-soft: #ebebeb;
+  --color-accent: #555555;
+  --color-error: #c0392b;
+  --color-footer-bg: #e8e8e8;
 
   /* Goal / principle colors */
-  --goal-inclusion:   #2563EB;
-  --goal-plurality:   #16A34A;
-  --goal-equality:    #EA580C;
-  --goal-reflection:  #7C3AED;
-  --goal-authenticity:#DC2626;
+  --goal-inclusion: #2563eb;
+  --goal-plurality: #16a34a;
+  --goal-equality: #ea580c;
+  --goal-reflection: #7c3aed;
+  --goal-authenticity: #dc2626;
 
-  --radius:    8px;
+  --radius: 8px;
   --radius-sm: 5px;
-  --shadow:    0 1px 3px rgba(20, 35, 60, 0.07), 0 4px 14px rgba(20, 35, 60, 0.05);
-  --space:     16px;
-  --maxw:      1160px;
+  --shadow: 0 1px 3px rgba(20, 35, 60, 0.07), 0 4px 14px rgba(20, 35, 60, 0.05);
+  --space: 16px;
+  --maxw: 1160px;
 
-  --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font:
+    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial,
+    sans-serif;
 }
 
 * {
@@ -74,8 +76,6 @@ a:hover {
 }
 
 .app-header-inner {
-  max-width: var(--maxw);
-  margin: 0 auto;
   padding: 12px 20px;
   display: flex;
   align-items: center;
@@ -91,9 +91,8 @@ a:hover {
   margin: -4px -6px;
   cursor: pointer;
   border-radius: var(--radius-sm);
-  color: #FFFFFF;
+  color: #ffffff;
 }
-
 
 .app-logo-icon {
   width: 28px;
@@ -105,7 +104,7 @@ a:hover {
   font-size: 22px;
   font-weight: 700;
   letter-spacing: -0.02em;
-  color: #FFFFFF;
+  color: #ffffff;
 }
 
 .app {
@@ -123,6 +122,10 @@ a:hover {
 
 .app-content {
   min-width: 0;
+}
+
+.app-content-solo {
+  width: 100%;
 }
 
 .app-status {
@@ -248,7 +251,9 @@ a:hover {
   cursor: pointer;
   font: inherit;
   color: inherit;
-  transition: border-color 0.1s ease, background 0.1s ease;
+  transition:
+    border-color 0.1s ease,
+    background 0.1s ease;
 }
 
 .option:hover {
@@ -434,6 +439,7 @@ a:hover {
 
 .ranked-controls {
   display: flex;
+  align-items: center;
   gap: 5px;
 }
 
@@ -651,6 +657,65 @@ a:hover {
   align-items: center;
 }
 
+.results-actions-right {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* ----- All recommendations ------------------------------------------------ */
+
+.all-recs-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.all-recs-search {
+  font: inherit;
+  font-size: 14px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-ink);
+  background: var(--color-surface);
+  flex: 1 1 200px;
+}
+
+.all-recs-search:focus {
+  outline: 2px solid var(--color-primary-soft);
+  border-color: var(--color-primary);
+}
+
+.all-recs-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.all-recs-select {
+  font: inherit;
+  font-size: 14px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-ink);
+  background: var(--color-surface);
+  cursor: pointer;
+}
+
+.all-recs-select:focus {
+  outline: 2px solid var(--color-primary-soft);
+  border-color: var(--color-primary);
+}
+
+.all-recs-empty {
+  color: var(--color-ink-soft);
+  font-size: 15px;
+  margin: 32px 0;
+}
+
 .btn {
   font: inherit;
   font-size: 14px;
@@ -659,7 +724,9 @@ a:hover {
   padding: 10px 18px;
   cursor: pointer;
   border: 1px solid transparent;
-  transition: background 0.1s ease, border-color 0.1s ease;
+  transition:
+    background 0.1s ease,
+    border-color 0.1s ease;
 }
 
 .btn-primary {
@@ -791,7 +858,29 @@ a:hover {
 /* ----- Results ------------------------------------------------------------ */
 
 .results-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 20px;
+}
+
+.contact-restore-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+  background: none;
+  border: none;
+  color: var(--color-ink-soft);
+  cursor: pointer;
+  font-size: 24px;
+  padding: 0;
+}
+
+.contact-restore-btn:hover {
+  color: var(--color-ink);
 }
 
 .results-title {
@@ -817,6 +906,7 @@ a:hover {
 }
 
 .rec-card {
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   padding: 18px 20px;
@@ -855,6 +945,49 @@ a:hover {
   font-size: 15px;
 }
 
+.rec-pros,
+.rec-cons {
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.rec-pros {
+  background: #f0faf3;
+  border: 1px solid #a3d9b1;
+  color: #1d6130;
+}
+
+.rec-cons {
+  background: #fff5f5;
+  border: 1px solid #f5b8b8;
+  color: #8b2020;
+}
+
+.rec-pros strong,
+.rec-cons strong {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  opacity: 0.7;
+}
+
+.rec-pros p,
+.rec-cons p {
+  margin: 0;
+}
+
+.rec-because {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--color-ink-soft);
+  font-style: italic;
+}
+
 .rec-principles {
   display: flex;
   gap: 8px;
@@ -872,47 +1005,78 @@ a:hover {
 
 /* ----- Contact section ---------------------------------------------------- */
 
-.contact-section {
-  margin-top: 32px;
-  padding-top: 24px;
-  border-top: 1px solid var(--color-border);
+.contact-card {
+  position: relative;
+  margin-bottom: 28px;
+  padding: 14px 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
 }
 
-.contact-title {
-  margin: 0 0 6px;
+.contact-card-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
   font-size: 18px;
-  font-weight: 700;
-}
-
-.contact-sub {
-  margin: 0 0 20px;
+  line-height: 1;
   color: var(--color-ink-soft);
-  max-width: 56ch;
+  border-radius: var(--radius-sm);
+  padding: 0;
 }
 
-.contact-form {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  max-width: 420px;
+.contact-card-close:hover {
+  background: var(--color-border);
+  color: var(--color-ink);
 }
 
-.contact-field {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.contact-label {
+.contact-card-title {
+  margin: 0 0 3px;
+  padding-right: 32px;
   font-size: 14px;
   font-weight: 600;
   color: var(--color-ink);
 }
 
+.contact-card-sub {
+  margin: 0 0 12px;
+  padding-right: 32px;
+  font-size: 13px;
+  color: var(--color-ink-soft);
+}
+
+.contact-form {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.contact-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1 1 0;
+}
+
+.contact-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-ink-soft);
+}
+
 .contact-input {
   font: inherit;
-  font-size: 15px;
-  padding: 10px 12px;
+  font-size: 13px;
+  padding: 7px 10px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   color: var(--color-ink);
@@ -926,7 +1090,10 @@ a:hover {
 
 .contact-form .btn-primary {
   margin-left: 0;
-  align-self: flex-start;
+  align-self: flex-end;
+  flex-shrink: 0;
+  font-size: 13px;
+  padding: 7px 14px;
 }
 
 .contact-confirm {
@@ -1002,7 +1169,6 @@ a:hover {
   display: flex;
   flex-direction: column;
   gap: 40px;
-  max-width: 720px;
   padding: 12px 0;
 }
 
@@ -1024,7 +1190,6 @@ a:hover {
   font-size: 17px;
   color: var(--color-ink-soft);
   margin: 0;
-  max-width: 60ch;
   line-height: 1.65;
 }
 

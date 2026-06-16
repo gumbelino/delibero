@@ -1,9 +1,11 @@
+import { Routes, Route } from "react-router-dom";
 import { useData } from "./state/useData";
 import { useWizard } from "./state/wizardStore";
-import { Wizard } from "./components/Wizard";
 import { AnswersSidebar } from "./components/AnswersSidebar";
 import { Results } from "./components/results/Results";
-import { Landing } from "./components/Landing";
+import { Landing } from "./pages/Landing";
+import { Wizard } from "./pages/Wizard";
+import { AllRecommendations } from "./pages/AllRecommendations";
 
 function NavLogo() {
   const goHome = useWizard((s) => s.goHome);
@@ -17,11 +19,12 @@ function NavLogo() {
   );
 }
 
-export default function App() {
-  const { templates, tree, loading, error } = useData();
-  const showResults = useWizard((s) => s.showResults);
-  const showLanding = useWizard((s) => s.showLanding);
-
+function Shell({ children, sidebar = false, solo = false }: {
+  children: React.ReactNode;
+  sidebar?: boolean;
+  solo?: boolean;
+}) {
+  const content = solo ? <div className="app-content-solo">{children}</div> : children;
   return (
     <>
       <header className="app-header no-print">
@@ -29,26 +32,15 @@ export default function App() {
           <NavLogo />
         </div>
       </header>
-
       <div className="app">
         <main className="app-main">
-          {loading && <p className="app-status">Loading…</p>}
-          {error && (
-            <p className="app-status app-error">
-              Could not load the recommendation data: {error}
-            </p>
-          )}
-          {!loading && !error && showLanding && <Landing />}
-          {!loading && !error && !showLanding && (
+          {sidebar ? (
             <div className="app-layout">
-              <div className="app-content">
-                {showResults ? <Results templates={templates} tree={tree} /> : <Wizard />}
-              </div>
+              <div className="app-content">{content}</div>
               <AnswersSidebar />
             </div>
-          )}
+          ) : content}
         </main>
-
         <footer className="app-footer no-print">
           <div className="footer-meta">
             <span>AI4Deliberation WP2</span>
@@ -62,5 +54,45 @@ export default function App() {
         </footer>
       </div>
     </>
+  );
+}
+
+function MainApp() {
+  const { templates, tree, recommendations, loading, error } = useData();
+  const showResults = useWizard((s) => s.showResults);
+  const showLanding = useWizard((s) => s.showLanding);
+
+  if (loading) return <Shell><p className="app-status">Loading…</p></Shell>;
+  if (error) return <Shell><p className="app-status app-error">Could not load the recommendation data: {error}</p></Shell>;
+  if (showLanding) return <Shell solo><Landing /></Shell>;
+
+  return (
+    <Shell sidebar>
+      {showResults
+        ? <Results templates={templates} tree={tree} recommendations={recommendations} />
+        : <Wizard />}
+    </Shell>
+  );
+}
+
+function RecommendationsPage() {
+  const { recommendations, loading, error } = useData();
+
+  if (loading) return <Shell><p className="app-status">Loading…</p></Shell>;
+  if (error) return <Shell><p className="app-status app-error">Could not load the recommendation data: {error}</p></Shell>;
+
+  return (
+    <Shell solo>
+      <AllRecommendations recommendations={recommendations} />
+    </Shell>
+  );
+}
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/recommendations" element={<RecommendationsPage />} />
+      <Route path="*" element={<MainApp />} />
+    </Routes>
   );
 }

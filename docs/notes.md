@@ -1,7 +1,8 @@
 # Notes
 
-## 2026.06.16 Meeting with FV
+## 2026.06.17 Meeting with FV
 
+- are these the right questions to ask? any other constraint we need to ask about? if so, what is the recommendation attached to it?
 - do we want to save people's information? e.g., name/email, answers to questions? This can be a question at the end: "Would you like professional support to achieve your goals?"
 - is this tool designed for people hosting large scale deliberations only? or small deliberations too? if so0, what is small and what is large? I would suggest keeping it open.
 

@@ -18,7 +18,7 @@ export function Landing() {
           className="btn btn-primary landing-cta"
           onClick={start}
         >
-          Start the questionnaire
+          Get started
         </button>
       </div>
 
@@ -26,7 +26,7 @@ export function Landing() {
         <div className="landing-step">
           <span className="landing-step-num">1</span>
           <div>
-            <h3 className="landing-step-title">Answer 7 questions</h3>
+            <h3 className="landing-step-title">Answer a few short questions</h3>
             <p className="landing-step-body">
               Tell us about the scale of your process, the level of
               participation you are aiming for, who can take part, and what
@@ -49,7 +49,7 @@ export function Landing() {
           <span className="landing-step-num">3</span>
           <div>
             <h3 className="landing-step-title">
-              Get guidance — and expert support
+              Get guidance and expert support
             </h3>
             <p className="landing-step-body">
               Receive process design suggestions based on your answers. If you
