@@ -175,9 +175,15 @@ contacts.sessionId  → responses.sessionId    always present
 
 Unlike the analytics write in `responses.ts`, a failed contact write is **shown to the visitor** and leaves their typed details in place to retry. Somebody asking to be contacted must never be told it succeeded when it did not.
 
+### Reading them
+
+`/admin` → **Help requests** lists them newest first, with the answers and matched recommendations behind each one, an Open/Handled/All filter, a handled toggle, and delete. The `handled` flag is the team's own follow-up state; nothing sets it automatically.
+
+That tab loads `contacts` and `responses` directly rather than through `useData`, because both are editors-only — fetching them where the public pages run would only produce 401s.
+
 ### No notification is sent
 
-Submitting writes a row and nothing else. Nobody is emailed. Requests are read from the Appwrite console (or by an editor via the API) until a notification path exists — an Appwrite Function on the `contacts` create event would be the natural place.
+Submitting writes a row and nothing else. Nobody is emailed, so somebody has to check the Help requests tab. An Appwrite Function on the `contacts` create event would be the natural place to add alerting.
 
 This replaced an earlier `mailto:` link that opened the visitor's own email client.
 
