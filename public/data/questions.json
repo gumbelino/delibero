@@ -1,0 +1,70 @@
+{
+  "_comment": "Seed questionnaire. Loaded directly when Appwrite is not configured, and used by `npm run appwrite:seed`. After seeding, admins edit questions in /admin — this file is only the starting point. A question's options come from its `dimension`'s values in parameters.json.",
+  "questions": [
+    {
+      "id": "participants",
+      "type": "single",
+      "order": 0,
+      "enabled": true,
+      "dimension": "size",
+      "title": "How many people will participate?",
+      "help": "The number of participants shapes which designs are feasible. Pick the size closest to your process."
+    },
+    {
+      "id": "engagement-depth",
+      "type": "single",
+      "order": 1,
+      "enabled": true,
+      "dimension": "level",
+      "citation": "iap2",
+      "title": "What level of public participation are you aiming for?",
+      "help": "Choose how much influence participants will have over the final decision — from receiving information to holding decision-making power themselves."
+    },
+    {
+      "id": "modes",
+      "type": "single",
+      "order": 2,
+      "enabled": true,
+      "dimension": "mode",
+      "title": "How can participants take part?",
+      "help": "The format affects who can join, what the process costs, and the quality of discussion."
+    },
+    {
+      "id": "criteria",
+      "type": "single",
+      "order": 3,
+      "enabled": true,
+      "dimension": "criteria",
+      "title": "Who is allowed to participate?",
+      "help": "This choice affects how representative and inclusive your process is, and how much control you have over who takes part."
+    },
+    {
+      "id": "diversity",
+      "type": "multi",
+      "order": 4,
+      "enabled": true,
+      "dimension": "diversity",
+      "title": "What demographics do you want to focus on?",
+      "help": "Select the demographic groups you specifically need to reach. This helps tailor the design to ensure those voices are included."
+    },
+    {
+      "id": "resources",
+      "type": "multi",
+      "order": 5,
+      "enabled": true,
+      "dimension": "resources",
+      "budgetInput": true,
+      "title": "What does your budget allow?",
+      "help": "Select the resources you can realistically commit to. Optionally enter your total budget in CHF."
+    },
+    {
+      "id": "priorities",
+      "type": "rank",
+      "order": 6,
+      "enabled": true,
+      "dimension": "principles",
+      "title": "What are your goals?",
+      "help": "Rank from most to least important. This ranking determines which process designs are recommended to you."
+    }
+  ]
+}

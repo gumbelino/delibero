@@ -1,6 +1,12 @@
 node_modules
 dist
 *.local
+.env
+.env.*
+!.env.example
 .DS_Store
 .vite
 *.tsbuildinfo
+
+# Local database backups — contain response and contact data.
+backups/

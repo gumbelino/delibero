@@ -1,0 +1,316 @@
+{
+  "_comment": "Seed data for dimensions and their allowed values. Loaded directly when Appwrite is not configured, and used by `npm run appwrite:seed`. After seeding, admins edit these in /admin — this file is only the starting point.",
+  "dimensions": [
+    {
+      "key": "size",
+      "label": "Size",
+      "description": "Deliberation size bands offered in the questionnaire.",
+      "matching": true,
+      "questionId": "participants",
+      "order": 0,
+      "builtin": true
+    },
+    {
+      "key": "level",
+      "label": "Level",
+      "description": "IAP2 spectrum levels of public participation.",
+      "matching": true,
+      "questionId": "engagement-depth",
+      "order": 1,
+      "builtin": true
+    },
+    {
+      "key": "mode",
+      "label": "Mode",
+      "description": "How participants can take part.",
+      "matching": true,
+      "questionId": "modes",
+      "order": 2,
+      "builtin": true
+    },
+    {
+      "key": "criteria",
+      "label": "Criteria",
+      "description": "How participants are selected.",
+      "matching": true,
+      "questionId": "criteria",
+      "order": 3,
+      "builtin": true
+    },
+    {
+      "key": "stage",
+      "label": "Stage",
+      "description": "Stages of the deliberation a recommendation can strengthen.",
+      "matching": false,
+      "order": 4,
+      "builtin": true
+    },
+    {
+      "key": "principles",
+      "label": "Principles",
+      "description": "Deliberative principles a recommendation supports.",
+      "matching": false,
+      "order": 5,
+      "builtin": true
+    },
+    {
+      "key": "diversity",
+      "label": "Diversity",
+      "description": "Demographic groups a process aims to reach.",
+      "matching": false,
+      "order": 6,
+      "builtin": true
+    },
+    {
+      "key": "resources",
+      "label": "Resources",
+      "description": "Resources the organiser can commit.",
+      "matching": false,
+      "order": 7,
+      "builtin": true
+    }
+  ],
+  "values": {
+    "size": [
+      {
+        "value": "small",
+        "label": "Small",
+        "description": "5 – 50 participants"
+      },
+      {
+        "value": "medium",
+        "label": "Medium",
+        "description": "51 – 500 participants"
+      },
+      {
+        "value": "large",
+        "label": "Large",
+        "description": "501+ participants"
+      }
+    ],
+    "level": [
+      {
+        "value": "inform",
+        "label": "Inform",
+        "description": "Provide balanced, objective information to help the public understand the issue."
+      },
+      {
+        "value": "consult",
+        "label": "Consult",
+        "description": "Obtain public feedback on analysis, alternatives, and decisions."
+      },
+      {
+        "value": "involve",
+        "label": "Involve",
+        "description": "Work directly with the public so concerns and aspirations are consistently understood and considered."
+      },
+      {
+        "value": "collaborate",
+        "label": "Collaborate",
+        "description": "Partner with the public in each aspect of the decision, including developing alternatives and a preferred solution."
+      },
+      {
+        "value": "empower",
+        "label": "Empower",
+        "description": "Place final decision-making in the hands of the public."
+      }
+    ],
+    "mode": [
+      {
+        "value": "online",
+        "label": "Online only",
+        "description": "All participation happens through digital channels."
+      },
+      {
+        "value": "face-to-face",
+        "label": "Face-to-face only",
+        "description": "All participation happens in person."
+      },
+      {
+        "value": "hybrid",
+        "label": "Both online and face-to-face",
+        "description": "A mix of in-person and digital participation."
+      }
+    ],
+    "criteria": [
+      {
+        "value": "self-selection",
+        "label": "Anyone can participate",
+        "description": "Self-selection — lower barrier, broader reach."
+      },
+      {
+        "value": "sortition",
+        "label": "Invited people only",
+        "description": "Sortition — more representative, but higher cost."
+      }
+    ],
+    "stage": [
+      {
+        "value": "design",
+        "label": "Design",
+        "description": "Framing the question and designing the process."
+      },
+      {
+        "value": "recruitment",
+        "label": "Recruitment",
+        "description": "Reaching and selecting participants."
+      },
+      {
+        "value": "learning",
+        "label": "Learning",
+        "description": "Providing information and expert input."
+      },
+      {
+        "value": "consultation",
+        "label": "Consultation",
+        "description": "Gathering input from the wider public."
+      },
+      {
+        "value": "deliberation",
+        "label": "Deliberation",
+        "description": "Structured discussion among participants."
+      },
+      {
+        "value": "decision",
+        "label": "Decision",
+        "description": "Reaching and recording conclusions."
+      },
+      {
+        "value": "evaluation",
+        "label": "Evaluation",
+        "description": "Assessing the process and its outcomes."
+      }
+    ],
+    "principles": [
+      {
+        "value": "Inclusion",
+        "label": "I want more people to participate",
+        "color": "#2563EB"
+      },
+      {
+        "value": "Plurality",
+        "label": "I want a wide variety of ideas",
+        "color": "#16A34A"
+      },
+      {
+        "value": "Equality",
+        "label": "I want a wide variety of people",
+        "color": "#EA580C"
+      },
+      {
+        "value": "Reflection",
+        "label": "I want deeper discussions",
+        "color": "#7C3AED"
+      },
+      {
+        "value": "Authenticity",
+        "label": "I want honest ideas",
+        "color": "#DC2626"
+      }
+    ],
+    "diversity": [
+      {
+        "value": "gender-male",
+        "label": "Male",
+        "group": "Gender"
+      },
+      {
+        "value": "gender-female",
+        "label": "Female",
+        "group": "Gender"
+      },
+      {
+        "value": "gender-nonbinary",
+        "label": "Non-binary or other",
+        "group": "Gender"
+      },
+      {
+        "value": "age-18-24",
+        "label": "18–24",
+        "group": "Age"
+      },
+      {
+        "value": "age-25-34",
+        "label": "25–34",
+        "group": "Age"
+      },
+      {
+        "value": "age-35-44",
+        "label": "35–44",
+        "group": "Age"
+      },
+      {
+        "value": "age-45-54",
+        "label": "45–54",
+        "group": "Age"
+      },
+      {
+        "value": "age-55-64",
+        "label": "55–64",
+        "group": "Age"
+      },
+      {
+        "value": "age-65plus",
+        "label": "65 and over",
+        "group": "Age"
+      },
+      {
+        "value": "eth-white-european",
+        "label": "White / European",
+        "group": "Ethnic background"
+      },
+      {
+        "value": "eth-black-african",
+        "label": "Black / African descent",
+        "group": "Ethnic background"
+      },
+      {
+        "value": "eth-asian-east",
+        "label": "Asian / East Asian",
+        "group": "Ethnic background"
+      },
+      {
+        "value": "eth-asian-south",
+        "label": "South Asian",
+        "group": "Ethnic background"
+      },
+      {
+        "value": "eth-latin-american",
+        "label": "Latin American / Hispanic",
+        "group": "Ethnic background"
+      },
+      {
+        "value": "eth-mena",
+        "label": "Middle Eastern / North African",
+        "group": "Ethnic background"
+      },
+      {
+        "value": "eth-mixed",
+        "label": "Mixed heritage",
+        "group": "Ethnic background"
+      },
+      {
+        "value": "eth-other",
+        "label": "Other",
+        "group": "Ethnic background"
+      }
+    ],
+    "resources": [
+      {
+        "value": "online-platform",
+        "label": "Host online deliberation platform",
+        "description": "Use or license a digital platform for online deliberation."
+      },
+      {
+        "value": "dedicated-staff",
+        "label": "Hire dedicated staff",
+        "description": "Employ people specifically for this process."
+      },
+      {
+        "value": "consultants",
+        "label": "Hire consultants",
+        "description": "Bring in external expertise and facilitation."
+      }
+    ]
+  }
+}

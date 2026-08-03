@@ -1,47 +1,68 @@
-import type { RecommendationRow, MatchedRecommendation } from "../types";
-
-const SIZE_BUCKETS: Record<string, string> = {
-  "20": "small",
-  "100": "small",
-  "500": "medium",
-  "1000": "medium",
-  "10000": "large",
-  "50000": "large",
-  "100000": "large",
-};
+import type {
+  DimensionDef,
+  MatchedRecommendation,
+  Question,
+  RecommendationRow,
+} from "../types";
 
 function fits(rowVal: string, answerVal: string): boolean {
-  return rowVal === "any" || rowVal === answerVal;
+  if (!rowVal || rowVal === "any") return true;
+  return rowVal.split(",").map((v) => v.trim()).includes(answerVal);
+}
+
+/**
+ * Dimensions that actually constrain the result set: flagged for matching, with
+ * an enabled question attached, and that question answered.
+ *
+ * An admin can flag a dimension for matching and never attach a question to it,
+ * disable the question, or the user may not have reached it yet. Treating any
+ * of those as "matches nothing" would silently empty the results page with no
+ * explanation, so they are treated as "no constraint" instead.
+ */
+function activeDimensions(
+  dimensions: DimensionDef[],
+  questions: Question[],
+  answers: Record<string, unknown>,
+): { dim: DimensionDef; answer: string }[] {
+  const active: { dim: DimensionDef; answer: string }[] = [];
+
+  for (const dim of dimensions) {
+    if (!dim.matching) continue;
+
+    const question = questions.find((q) => q.enabled && q.dimension === dim.key);
+    if (!question) continue;
+
+    const answer = answers[question.id];
+    if (typeof answer !== "string" || !answer) continue;
+
+    active.push({ dim, answer });
+  }
+
+  return active;
 }
 
 export function matchRecommendations(
   rows: RecommendationRow[],
-  answers: Record<string, unknown>
+  answers: Record<string, unknown>,
+  dimensions: DimensionDef[],
+  questions: Question[] = [],
 ): MatchedRecommendation[] {
-  const participants = answers["participants"] as string | undefined;
-  const size = participants ? (SIZE_BUCKETS[participants] ?? "large") : "";
-  const level = (answers["engagement-depth"] as string) ?? "";
-  const mode = (answers["modes"] as string) ?? "";
-  const criteria = (answers["criteria"] as string) ?? "";
-
+  const active = activeDimensions(dimensions, questions, answers);
   const matched: MatchedRecommendation[] = [];
 
   for (const row of rows) {
-    if (
-      fits(row.size, size) &&
-      fits(row.level, level) &&
-      fits(row.mode, mode) &&
-      fits(row.criteria, criteria)
-    ) {
-      const reasons: string[] = [];
-      if (row.size !== "any") reasons.push(`${size} deliberation size`);
-      if (row.level !== "any") reasons.push(`participation level: ${level}`);
-      if (row.mode !== "any") reasons.push(`mode: ${mode}`);
-      if (row.criteria !== "any") reasons.push(`criteria: ${criteria}`);
-      const matchedOn = reasons.length > 0 ? reasons.join(", ") : size || level || mode || criteria || "your answers";
+    if (!active.every(({ dim, answer }) => fits(row.dims?.[dim.key] ?? "any", answer))) continue;
 
-      matched.push({ row, matchedOn });
-    }
+    // Attribute the match to the dimensions that actually narrowed it — a row
+    // set to "any" everywhere was not selected *because of* the answers.
+    const reasons = active
+      .filter(({ dim }) => (row.dims?.[dim.key] ?? "any") !== "any")
+      .map(({ dim, answer }) => `${dim.label.toLowerCase()}: ${answer}`);
+
+    matched.push({
+      row,
+      matchedOn: reasons.length > 0 ? reasons.join(", ") : "your answers",
+    });
   }
 
   return matched;

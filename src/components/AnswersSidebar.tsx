@@ -1,19 +1,24 @@
-import { QUESTIONS } from "../data/questions";
+import type { Question } from "../types";
 import { useWizard } from "../state/wizardStore";
-import { formatAnswer } from "../engine/rationale";
+import { formatAnswer } from "../engine/formatAnswer";
+
+interface Props {
+  /** Active questions in display order, supplied by the data layer. */
+  questions: Question[];
+}
 
 /** Shows all questions at all times. Clicking one jumps back to that step. */
-export function AnswersSidebar() {
+export function AnswersSidebar({ questions: all }: Props) {
   const { step, answers, showResults, goTo } = useWizard();
 
-  const questions = QUESTIONS.filter((q) => q.type !== "info");
+  const questions = all.filter((q) => q.type !== "info");
 
   return (
     <aside className="sidebar">
       <h2 className="sidebar-title">Your answers</h2>
       <ul className="sidebar-list">
         {questions.map((q) => {
-          const index = QUESTIONS.indexOf(q);
+          const index = all.indexOf(q);
           const isCurrent = !showResults && index === step;
           const given = answers[q.id];
           return (

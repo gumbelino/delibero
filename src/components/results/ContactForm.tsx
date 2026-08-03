@@ -1,29 +1,56 @@
 import { useState } from "react";
-import type { Answers } from "../../types";
+import { saveContactRequest } from "../../lib/repo/contacts";
 
 interface Props {
-  answers: Answers;
+  /** Identifies this wizard run; always available. */
+  sessionId: string;
+  /**
+   * Row id of this run's saved response. Null while that write is still in
+   * flight, or if it failed — the request is still saved either way, linked by
+   * `sessionId`.
+   */
+  responseId: string | null;
 }
 
-export function ContactForm({ answers }: Props) {
+export function ContactForm({ sessionId, responseId }: Props) {
   const [name, setName] = useState("");
   const [contact, setContact] = useState("");
+  const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const subject = encodeURIComponent("delibero – Request for help");
-    const body = encodeURIComponent(
-      `Name: ${name}\nContact: ${contact}\n\nAnswers:\n${JSON.stringify(answers, null, 2)}`,
-    );
-    window.location.href = `mailto:delibero@uzh.ch?subject=${subject}&body=${body}`;
-    setSent(true);
-  };
+    setBusy(true);
+    setError(null);
+    try {
+      await saveContactRequest({
+        name,
+        contact,
+        sessionId,
+        responseId: responseId ?? undefined,
+      });
+      setSent(true);
+    } catch (err) {
+      // The visitor expects to be contacted, so a failure must be visible and
+      // must leave their typed details in place to retry.
+      setError(
+        err instanceof Error
+          ? `Could not send your request: ${err.message}`
+          : "Could not send your request. Please try again.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
 
   if (sent) {
     return (
       <div className="contact-confirm">
-        <p>Your email client should have opened. We will be in touch soon.</p>
+        <p>
+          Thank you — your request has been received, along with the answers you gave.
+          The team will get in touch using the details you provided.
+        </p>
       </div>
     );
   }
@@ -40,6 +67,7 @@ export function ContactForm({ answers }: Props) {
           className="contact-input"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          autoComplete="name"
           required
         />
       </div>
@@ -56,8 +84,11 @@ export function ContactForm({ answers }: Props) {
           required
         />
       </div>
-      <button type="submit" className="btn btn-primary">
-        Request help
+
+      {error && <p className="app-status app-error">{error}</p>}
+
+      <button type="submit" className="btn btn-primary" disabled={busy}>
+        {busy ? "Sending…" : "Request help"}
       </button>
     </form>
   );

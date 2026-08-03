@@ -1,125 +1,36 @@
-// Loads and parses the researcher-editable CSV data files.
+// CSV export for the admin builder.
+//
+// The app reads exclusively from Appwrite — there is no CSV import path at
+// runtime any more. The files under public/data are seed input for
+// scripts/seed-appwrite.mjs, which parses them in Node, not here.
 
 import Papa from "papaparse";
-import type { Template, TreeNode, PrincipleId, RecommendationRow } from "../types";
+import type { DimensionId, RecommendationRow } from "../types";
 
-const PRINCIPLE_SET: ReadonlySet<string> = new Set([
-  "Inclusion",
-  "Equality",
-  "Plurality",
-  "Authenticity",
-  "Reflection",
-]);
+/** Columns that are recommendation prose rather than a dimension. */
+const TEXT_COLUMNS = ["name", "description", "pros", "cons", "body"] as const;
 
-/** Split a semicolon-separated CSV cell into trimmed, non-empty parts. */
-function splitList(cell: string | undefined): string[] {
-  if (!cell) return [];
-  return cell
-    .split(";")
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0);
-}
+/**
+ * Serialize recommendation rows to CSV, emitting one column per dimension so an
+ * export stays complete after an admin adds a dimension. Papa handles
+ * quoting/escaping (commas, quotes, newlines) so the output is always valid.
+ */
+export function serializeRecommendations(
+  rows: RecommendationRow[],
+  dimensionKeys?: DimensionId[],
+): string {
+  // Prefer the caller's dimension order; otherwise derive it from the rows so
+  // the export is still complete when no dimension list is available.
+  const keys =
+    dimensionKeys ?? [...new Set(rows.flatMap((r) => Object.keys(r.dims ?? {})))];
 
-function parseCsv<T extends Record<string, string>>(text: string): T[] {
-  const result = Papa.parse<T>(text, {
-    header: true,
-    skipEmptyLines: true,
-    transformHeader: (h) => h.trim(),
+  const fields = [...keys, ...TEXT_COLUMNS];
+  const data = rows.map((r) => {
+    const flat: Record<string, string> = {};
+    for (const key of keys) flat[key] = r.dims?.[key] ?? "any";
+    for (const col of TEXT_COLUMNS) flat[col] = r[col] ?? "";
+    return flat;
   });
-  // Papa reports malformed rows in `errors`; surface them loudly during dev.
-  if (result.errors.length > 0) {
-    console.warn("CSV parse warnings:", result.errors);
-  }
-  return result.data;
-}
 
-export function parseTemplates(text: string): Template[] {
-  type Row = {
-    id: string;
-    name: string;
-    description: string;
-    supports_principles: string;
-    citations: string;
-  };
-  return parseCsv<Row>(text)
-    .filter((r) => r.id)
-    .map((r) => ({
-      id: r.id.trim(),
-      name: (r.name ?? "").trim(),
-      description: (r.description ?? "").trim(),
-      supportsPrinciples: splitList(r.supports_principles).filter((p): p is PrincipleId =>
-        PRINCIPLE_SET.has(p),
-      ),
-      citations: splitList(r.citations),
-    }));
-}
-
-export function parseTree(text: string): TreeNode[] {
-  type Row = {
-    node_id: string;
-    parent_id: string;
-    question_id: string;
-    match: string;
-    recommend: string;
-  };
-  return parseCsv<Row>(text)
-    .filter((r) => r.node_id)
-    .map((r) => ({
-      nodeId: r.node_id.trim(),
-      parentId: (r.parent_id ?? "").trim(),
-      questionId: (r.question_id ?? "").trim(),
-      match: (r.match ?? "").trim(),
-      recommend: (r.recommend ?? "").trim(),
-    }));
-}
-
-export function parseRecommendations(text: string): RecommendationRow[] {
-  type Row = {
-    size: string;
-    level: string;
-    mode: string;
-    criteria: string;
-    name: string;
-    description: string;
-    stage: string;
-    principles: string;
-    pros: string;
-    cons: string;
-  };
-  return parseCsv<Row>(text)
-    .filter((r) => r.name)
-    .map((r) => ({
-      size: (r.size ?? "").trim(),
-      level: (r.level ?? "").trim(),
-      mode: (r.mode ?? "").trim(),
-      criteria: (r.criteria ?? "").trim(),
-      name: r.name.trim(),
-      description: (r.description ?? "").trim(),
-      stage: (r.stage ?? "").trim(),
-      principles: (r.principles ?? "").trim(),
-      pros: (r.pros ?? "").trim(),
-      cons: (r.cons ?? "").trim(),
-    }));
-}
-
-async function fetchText(url: string): Promise<string> {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Failed to load ${url}: ${res.status} ${res.statusText}`);
-  return res.text();
-}
-
-/** Load all data files. Paths are relative to the deployed site root. */
-export async function loadData(
-  base = "data",
-): Promise<{ templates: Template[]; tree: TreeNode[]; recommendations: RecommendationRow[] }> {
-  const [templatesText, treeText, recommendationsText] = await Promise.all([
-    fetchText(`${base}/templates.csv`),
-    fetchText(`${base}/tree.csv`),
-    fetchText(`${base}/recommendations.csv`),
-  ]);
-  return {
-    templates: parseTemplates(templatesText),
-    tree: parseTree(treeText),
-    recommendations: parseRecommendations(recommendationsText),
-  };
+  return Papa.unparse({ fields, data }, { columns: fields });
 }

@@ -11,7 +11,6 @@ export type PrincipleId =
 /** The kinds of questions the wizard can render. */
 export type QuestionType =
   | "rank" // ranked-choice ordering of options
-  | "scale" // a single value from a non-linear scale
   | "single" // pick exactly one option
   | "multi" // pick any number of options
   | "numberPair" // two numbers (engagement calculator)
@@ -33,12 +32,24 @@ export interface QuestionOption {
 }
 
 export interface Question {
+  /** Appwrite row id. Absent for questions loaded from the bundled JSON. */
+  rowId?: string;
+  /** Stable slug; answers are keyed by this, so it is immutable once saved. */
   id: string;
   type: QuestionType;
+  /** Position in the wizard. */
+  order: number;
+  /**
+   * Dimension supplying this question's options. Empty for `info` and
+   * `numberPair`, which collect no option-based answer.
+   */
+  dimension?: DimensionId;
+  /** Unticking hides a question without deleting it or its answers. */
+  enabled: boolean;
   title: string;
   /** Optional helper text shown beneath the title. */
   help?: string;
-  /** Options for rank/scale/single/multi questions. */
+  /** Options for rank/single/multi questions. */
   options?: QuestionOption[];
   /** Labels for the two fields of a numberPair question. */
   fields?: { key: string; label: string }[];
@@ -53,7 +64,6 @@ export interface Question {
 /**
  * A single answer. Shape depends on the question type:
  * - rank:       string[] (ordered option values, best first)
- * - scale:      string (selected option value)
  * - single:     string (selected option value)
  * - multi:      string[] (selected option values)
  * - numberPair: Record<string, number>
@@ -63,74 +73,79 @@ export type AnswerValue = string | string[] | Record<string, number> | number;
 
 export type Answers = Record<string, AnswerValue>;
 
-/** A recommendation template, loaded from templates.csv. */
-export interface Template {
-  id: string;
-  name: string;
-  description: string;
-  /** Principles this template supports, in plain names. The only link to ranking. */
-  supportsPrinciples: PrincipleId[];
-  /** Citation keys, e.g. ["24"]. */
-  citations: string[];
-}
+/**
+ * A dimension key, e.g. "size" or an admin-created one like "duration".
+ * Not a closed union — admins define new dimensions at runtime.
+ */
+export type DimensionId = string;
 
-/** A single node/branch of the decision tree, loaded from tree.csv. */
-export interface TreeNode {
-  nodeId: string;
-  /** Empty string for root nodes. */
-  parentId: string;
-  /** The question whose answer this node tests. */
-  questionId: string;
-  /** Match expression: exact option value, "any", or a threshold like ">=1000". */
-  match: string;
-  /** Template id to recommend when this node is reached (may be empty). */
-  recommend: string;
-}
-
-/** Why a principle contributed weight to a template's score. */
-export interface PrincipleContribution {
-  principle: PrincipleId;
-  /** 1 = highest priority. */
-  rank: number;
-  /** Weight contributed (derived purely from the user's ranking). */
-  weight: number;
-}
-
-/** Why a tree path nominated a template. */
-export interface TreeReason {
-  nodeId: string;
-  questionId: string;
-  match: string;
-}
-
-/** A row from recommendations.csv. */
+/** A row from recommendations.csv (or the Appwrite `recommendations` table). */
 export interface RecommendationRow {
-  size: string;
-  level: string;
-  mode: string;
-  criteria: string;
+  /** Appwrite row id. Absent for rows parsed from CSV that have never been saved. */
+  id?: string;
   name: string;
   description: string;
-  stage: string;
-  principles: string;
   pros: string;
   cons: string;
+  /**
+   * Long-form Markdown, shown only on the recommendation's own page — never on
+   * cards. Optional; most recommendations have none.
+   */
+  body: string;
+  /**
+   * Values per dimension, keyed by dimension key. Each holds `any`, a single
+   * value, or a comma-separated list. A dimension absent from this map is
+   * treated as `any`.
+   *
+   * This is a map rather than fixed fields so that adding a dimension needs no
+   * type change, no database migration, and no code change.
+   */
+  dims: Record<DimensionId, string>;
 }
+
+/**
+ * A dimension admins can create, rename, or delete. The six seeded ones are
+ * marked `builtin` because the questionnaire references them by key.
+ */
+export interface DimensionDef {
+  id?: string;
+  /** Stable slug used as the key in `RecommendationRow.dims`. Immutable. */
+  key: DimensionId;
+  label: string;
+  description?: string;
+  /**
+   * When true, this dimension filters which recommendations a user is shown.
+   * When false it is a descriptive tag only (like stage / principles).
+   */
+  matching: boolean;
+  order: number;
+  /** Seeded dimensions the questionnaire depends on; cannot be deleted. */
+  builtin: boolean;
+}
+
+/** One allowed value of a dimension, stored in the Appwrite `parameters` table. */
+export interface Parameter {
+  id?: string;
+  dimension: DimensionId;
+  /** Stable slug written into recommendation rows and answers, e.g. "small". */
+  value: string;
+  /** Shown to users as the answer option, and to admins as the value's name. */
+  label: string;
+  description?: string;
+  /** Optional heading that groups options within a question (e.g. "Age"). */
+  group?: string;
+  /** Optional hex colour, used by ranked-choice questions. */
+  color?: string;
+  /** Sort position within the dimension. */
+  order: number;
+}
+
+/** Parameter values grouped by the dimension they belong to. */
+export type ParameterSet = Record<DimensionId, Parameter[]>;
 
 /** A recommendation matched against user answers. */
 export interface MatchedRecommendation {
   row: RecommendationRow;
   /** Human-readable attribution, e.g. "size: small" */
   matchedOn: string;
-}
-
-/** A scored, explained recommendation produced by the engine. */
-export interface Recommendation {
-  template: Template;
-  /** Total weight = sum of contributing principle weights. */
-  score: number;
-  /** Tree nodes that nominated this template. */
-  nominatedBy: TreeReason[];
-  /** Ranked-principle contributions that produced the score. */
-  contributions: PrincipleContribution[];
 }

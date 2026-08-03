@@ -2,7 +2,6 @@ import type { Question, AnswerValue } from "../../types";
 import { CITATIONS, IAP2_URL } from "../../data/content";
 import { SingleSelect } from "./SingleSelect";
 import { MultiSelect } from "./MultiSelect";
-import { NonLinearScale } from "./NonLinearScale";
 import { RankedChoice } from "./RankedChoice";
 import { NumberPair } from "./NumberPair";
 import { InfoPanel } from "./InfoPanel";
@@ -25,9 +24,6 @@ export function QuestionView({ question, value, onChange }: Props) {
       )}
       {question.type === "multi" && (
         <MultiSelect question={question} value={value as string[]} onChange={onChange} />
-      )}
-      {question.type === "scale" && (
-        <NonLinearScale question={question} value={value as string} onChange={onChange} />
       )}
       {question.type === "rank" && (
         <RankedChoice question={question} value={value as string[]} onChange={onChange} />
