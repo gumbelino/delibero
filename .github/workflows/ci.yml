@@ -1,0 +1,33 @@
+name: CI
+
+# Verification only. Deployment is handled by Appwrite Sites, which builds from
+# this repository on every push to main — see docs/deployment.md.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Type-check
+        run: npx tsc -b
+
+      - name: Test
+        run: npm run test
+
+      # Builds without VITE_APPWRITE_* on purpose: the bundle must compile
+      # without secrets. Those values are injected by Appwrite Sites at deploy
+      # time, and the app reports a clear error at runtime if they are missing.
+      - name: Build
+        run: npm run build

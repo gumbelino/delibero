@@ -1,11 +1,17 @@
+import { useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
+import type { Question } from "./types";
 import { useData } from "./state/useData";
 import { useWizard } from "./state/wizardStore";
+import { useAuth } from "./state/authStore";
+import { AdminLogin } from "./pages/AdminLogin";
 import { AnswersSidebar } from "./components/AnswersSidebar";
 import { Results } from "./components/results/Results";
 import { Landing } from "./pages/Landing";
 import { Wizard } from "./pages/Wizard";
 import { AllRecommendations } from "./pages/AllRecommendations";
+import { RecommendationPage } from "./pages/RecommendationPage";
+import { AdminBuilder } from "./pages/AdminBuilder";
 
 function NavLogo() {
   const goHome = useWizard((s) => s.goHome);
@@ -19,10 +25,12 @@ function NavLogo() {
   );
 }
 
-function Shell({ children, sidebar = false, solo = false }: {
+function Shell({ children, sidebar = false, solo = false, questions = [] }: {
   children: React.ReactNode;
   sidebar?: boolean;
   solo?: boolean;
+  /** Required when `sidebar` is set — the sidebar lists them. */
+  questions?: Question[];
 }) {
   const content = solo ? <div className="app-content-solo">{children}</div> : children;
   return (
@@ -37,7 +45,7 @@ function Shell({ children, sidebar = false, solo = false }: {
           {sidebar ? (
             <div className="app-layout">
               <div className="app-content">{content}</div>
-              <AnswersSidebar />
+              <AnswersSidebar questions={questions} />
             </div>
           ) : content}
         </main>
@@ -58,32 +66,112 @@ function Shell({ children, sidebar = false, solo = false }: {
 }
 
 function MainApp() {
-  const { templates, tree, recommendations, loading, error } = useData();
+  const { recommendations, dimensions, questions, loading, error } = useData();
   const showResults = useWizard((s) => s.showResults);
   const showLanding = useWizard((s) => s.showLanding);
+  const setQuestionCount = useWizard((s) => s.setQuestionCount);
+
+  // Questions are admin-editable, so the store learns the count at runtime.
+  useEffect(() => {
+    setQuestionCount(questions.length);
+  }, [questions.length, setQuestionCount]);
 
   if (loading) return <Shell><p className="app-status">Loading…</p></Shell>;
   if (error) return <Shell><p className="app-status app-error">Could not load the recommendation data: {error}</p></Shell>;
   if (showLanding) return <Shell solo><Landing /></Shell>;
 
   return (
-    <Shell sidebar>
+    <Shell sidebar questions={questions}>
       {showResults
-        ? <Results templates={templates} tree={tree} recommendations={recommendations} />
-        : <Wizard />}
+        ? <Results recommendations={recommendations} dimensions={dimensions} questions={questions} />
+        : <Wizard questions={questions} />}
     </Shell>
   );
 }
 
 function RecommendationsPage() {
-  const { recommendations, loading, error } = useData();
+  const { recommendations, dimensions, loading, error } = useData();
 
   if (loading) return <Shell><p className="app-status">Loading…</p></Shell>;
   if (error) return <Shell><p className="app-status app-error">Could not load the recommendation data: {error}</p></Shell>;
 
   return (
     <Shell solo>
-      <AllRecommendations recommendations={recommendations} />
+      <AllRecommendations recommendations={recommendations} dimensions={dimensions} />
+    </Shell>
+  );
+}
+
+function SingleRecommendationPage() {
+  const { recommendations, dimensions, loading, error } = useData();
+
+  if (loading) return <Shell><p className="app-status">Loading…</p></Shell>;
+  if (error) return <Shell><p className="app-status app-error">Could not load the recommendation data: {error}</p></Shell>;
+
+  return (
+    <Shell solo>
+      <RecommendationPage recommendations={recommendations} dimensions={dimensions} />
+    </Shell>
+  );
+}
+
+// Unlisted admin page — intentionally not linked from anywhere in the app.
+// The gate below is UX only; the real protection is the Appwrite table
+// permissions, which reject writes from anyone outside the editors team.
+function AdminPage() {
+  const {
+    recommendations, dimensions, parameters, questions, loading, error, refresh,
+  } = useData();
+  const user = useAuth((s) => s.user);
+  const checking = useAuth((s) => s.checking);
+  const init = useAuth((s) => s.init);
+  const logout = useAuth((s) => s.logout);
+
+  useEffect(() => {
+    void init();
+  }, [init]);
+
+  if (checking || loading) return <Shell><p className="app-status">Loading…</p></Shell>;
+  if (error) return <Shell><p className="app-status app-error">Could not load the recommendation data: {error}</p></Shell>;
+
+  if (!user) return <Shell solo><AdminLogin /></Shell>;
+
+  // Signed in, but not an editor — the state every self-registered account
+  // starts in. Deliberately a dead end with instructions rather than an error.
+  if (!user.canEdit) {
+    return (
+      <Shell solo>
+        <div className="admin-login">
+          <h2 className="results-title">Access required</h2>
+          <p className="results-sub">
+            You are signed in as <strong>{user.email}</strong>, but this account does not
+            yet have permission to edit the knowledge base.
+          </p>
+          <p className="results-sub">
+            Contact the system administrator to request editor access, quoting the email
+            address above. An administrator grants it by adding your account to the{" "}
+            <code>editors</code> team.
+          </p>
+          <div className="results-actions">
+            <button type="button" className="btn btn-ghost" onClick={() => void logout()}>
+              Sign out
+            </button>
+          </div>
+        </div>
+      </Shell>
+    );
+  }
+
+  return (
+    <Shell solo>
+      <AdminBuilder
+        recommendations={recommendations}
+        dimensions={dimensions}
+        parameters={parameters}
+        questions={questions}
+        onRefresh={refresh}
+        onSignOut={() => void logout()}
+      />
     </Shell>
   );
 }
@@ -92,6 +180,8 @@ export default function App() {
   return (
     <Routes>
       <Route path="/recommendations" element={<RecommendationsPage />} />
+      <Route path="/recommendations/:id" element={<SingleRecommendationPage />} />
+      <Route path="/admin" element={<AdminPage />} />
       <Route path="*" element={<MainApp />} />
     </Routes>
   );

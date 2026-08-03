@@ -4,14 +4,19 @@
 
 import { create } from "zustand";
 import type { Answers, AnswerValue } from "../types";
-import { QUESTIONS } from "../data/questions";
 
 interface WizardState {
-  step: number; // index into QUESTIONS
+  step: number; // index into the active question list
   answers: Answers;
   showResults: boolean;
   showLanding: boolean;
+  /**
+   * How many questions the wizard has. Questions are admin-editable data now,
+   * so the store is told the count rather than importing a fixed array.
+   */
+  questionCount: number;
 
+  setQuestionCount: (n: number) => void;
   setAnswer: (questionId: string, value: AnswerValue) => void;
   next: () => void;
   back: () => void;
@@ -27,13 +32,18 @@ export const useWizard = create<WizardState>((set) => ({
   answers: {},
   showResults: false,
   showLanding: true,
+  questionCount: 0,
+
+  setQuestionCount: (n) =>
+    // Clamp the current step in case a question was removed while browsing.
+    set((s) => ({ questionCount: n, step: Math.min(s.step, Math.max(0, n - 1)) })),
 
   setAnswer: (questionId, value) =>
     set((s) => ({ answers: { ...s.answers, [questionId]: value } })),
 
   next: () =>
     set((s) => {
-      if (s.step >= QUESTIONS.length - 1) return { showResults: true };
+      if (s.step >= s.questionCount - 1) return { showResults: true };
       return { step: s.step + 1 };
     }),
 
@@ -44,8 +54,8 @@ export const useWizard = create<WizardState>((set) => ({
     }),
 
   goTo: (step) =>
-    set(() => ({
-      step: Math.min(Math.max(0, step), QUESTIONS.length - 1),
+    set((s) => ({
+      step: Math.min(Math.max(0, step), Math.max(0, s.questionCount - 1)),
       showResults: false,
     })),
 

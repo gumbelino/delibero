@@ -1,47 +1,53 @@
 # DPDT — Deliberation Process Design Tool
 
-A guided web app helping government officials and practitioners design a deliberative process. Users answer a questionnaire one question at a time (previous answers visible and editable in a sidebar) and receive ranked, traceable recommendations from a library of 5 deliberation design templates. Every recommendation explains *why* it was suggested, tracing back to the user's own answers and priorities.
+A guided web app helping government officials and practitioners design a deliberative process. Users answer a questionnaire one question at a time (previous answers visible and editable in a sidebar) and receive matched, explained recommendations from a library of process-design recommendations.
 
 ## Decisions
 
 - **Stack:** React + Vite + TypeScript, static bundle deployed on Netlify.
-- **No backend in v1.** All state lives in the browser. Results export to JSON or print to PDF. Firebase is deferred to v2.
-- **No hardcoded weights.** The only weights in the system come from the user's ranking of the 5 deliberative principles. Templates declare which principles they support; the ranking decides how much those count.
-- **Non-technical editability is a hard requirement.** Both data files (`templates.csv`, `tree.csv`) are plain one-concept-per-row CSVs that a researcher edits in Excel without touching code.
+- **Backend: Appwrite Cloud, and only Appwrite.** The knowledge base and anonymous wizard responses live in Appwrite. There is no offline fallback: if Appwrite is unreachable the app shows an error rather than serving a stale bundled copy, which would hide an outage from an editor who had just saved. The files under `public/data` are seed input for the setup scripts only.
+- **Non-technical editability is a hard requirement.** Researchers edit recommendations, the questionnaire, and dimension vocabularies at `/admin` (signed in), or in Excel via `recommendations.csv` for a bulk re-seed. The questionnaire is data, not code — there is no `questions.ts`.
+- **Anyone may sign up; nobody gets edit rights by default.** A new account belongs to no team, so Appwrite rejects its writes and the app shows a "request access" screen. An administrator grants access with `npm run appwrite:add-editor`.
+- **Schema is code.** `scripts/setup-appwrite.mjs` provisions the database, tables, columns, indexes, and permissions. Change the schema there and re-run it — do not click in the Appwrite console.
 - **One stylesheet, no inline styles.** All CSS is in `src/styles.css`. Components use `className` only — no `style={{...}}` props, no CSS-in-JS, no per-component CSS files.
 
 ## How recommendations work
 
 ```
-answers ──(tree.csv)──▶ candidate templates ──(user's principle ranking)──▶ ranked + explained
+questions ──▶ answers ──(dimensions × recommendations)──▶ matched recommendations
 ```
 
-1. **Decision tree (`public/data/tree.csv`)** — one row per node. Each row is evaluated against answers; matching leaf nodes nominate a candidate template. If nothing matches, all 5 templates become candidates (graceful fallback).
-2. **Ranking (`src/engine/rank.ts`)** — candidates are scored by alignment with the user's principle ranking. Rank #1 principle contributes the most weight, #5 the least. No other numbers.
-3. **Traceability (`src/engine/rationale.ts`)** — each recommendation shows which tree rule nominated it and which of the user's top-ranked principles it supports.
+Each question is attached to a **dimension**, and its answer options *are* that dimension's values. One vocabulary per concept: editing the values of "Size" changes both the options users pick from and the tags available on recommendations, so the two can never drift apart.
+
+**Matching (`src/engine/match.ts`)** — dimensions are data, not code. Each recommendation declares, per dimension, which values it applies to (`any`, one value, or a comma-separated list). A dimension constrains the results only when it is flagged `matching`, has an **enabled question attached to it**, and that question is answered — otherwise it is skipped, so a half-configured dimension can never empty the results page. Matched rows are shown with the reason they were surfaced.
 
 ## Project structure
 
 ```
+scripts/
+  setup-appwrite.mjs   Provisions the Appwrite schema (source of truth). Idempotent.
+  seed-appwrite.mjs    Imports the files below into Appwrite. One-time.
 public/data/
-  templates.csv       5 recommendation templates (name, description, supports_principles, citations)
-  tree.csv            Decision tree: one row = one node
+  recommendations.csv  Recommendation seed rows (script input only)
+  parameters.json      Seed dimensions + their values (script input only)
+  questions.json       Seed questionnaire (script input only)
 src/
+  lib/
+    appwrite.ts       Appwrite client, table ids, isAppwriteConfigured
+    repo/             One module per table: recommendations, dimensions, questions, parameters, responses
   styles.css          THE single global stylesheet
   types.ts            All shared TypeScript types
   data/
-    questions.ts      Questionnaire definition (sequence, types, options, help text)
-    content.ts        IAP2 spectrum, scaling tensions, citations map
+    content.ts        Scaling tensions, citations map, info-panel copy
   engine/
-    csv.ts            CSV loader/parser (papaparse)
-    tree.ts           Walks tree.csv against answers → candidate templates
-    rank.ts           Ranks candidates using only the user's principle ranking
-    rationale.ts      Builds human-readable "why?" explanations
-    recommend.ts      Orchestrates: answers → candidates → ranked + explained
-    engine.test.ts    15 unit tests covering the full pipeline
+    csv.ts            CSV export for the admin builder (papaparse)
+    markdown.ts       Safe Markdown subset renderer for recommendation bodies
+    match.ts          Matches recommendations.csv rows against the user's answers
+    formatAnswer.ts   Renders an answer value as a readable phrase (used by the sidebar)
   state/
     wizardStore.ts    Zustand store: current step, answers, showResults
-    useData.ts        Loads the two CSVs on mount
+    authStore.ts      Zustand store: admin session + editors-team membership
+    useData.ts        Loads the knowledge base (Appwrite, falling back to files)
   components/
     Wizard.tsx        One-question-at-a-time shell with segment progress bar
     AnswersSidebar.tsx  Previous answers, click any to edit (jumps back to that step)
@@ -49,50 +55,78 @@ src/
       QuestionView.tsx  Dispatcher: routes to the right renderer by question type
       SingleSelect.tsx
       MultiSelect.tsx
-      NonLinearScale.tsx  Discrete slider over the non-linear participant scale
       RankedChoice.tsx    Move-up/down ranked ordering of the 5 principles
       NumberPair.tsx      Engagement calculator (reached vs. participating, shows ratio)
       InfoPanel.tsx       Educational panel with no answer collected (scaling trade-offs)
     results/
-      Results.tsx       Ranked recommendation cards, recomputes on every render
-      WhyExpander.tsx   Collapsible traceability explanation per recommendation
-      ExportButton.tsx  Downloads JSON and triggers window.print()
+      Results.tsx       Matched recommendation cards, recomputes on every render
 docs/
   v1.md, prd.md, notes.md, ...   Source specifications and reference papers
 ```
 
 ## Question sequence
 
-Defined as data in `src/data/questions.ts` — reordering is a one-line array edit:
+Stored in the `questions` table and editable at `/admin` → Questions, so this list is a snapshot rather than a definition. Seeded order:
 
-1. `priorities` (rank) — rank the 5 principles; this is the sole source of weights
-2. `participants` (scale) — non-linear: 20, 100, 500, 1k, 10k, 50k, 100k
-3. `scale-tradeoffs` (info) — educational panel on the 4 scaling tensions; no answer
-4. `engagement-depth` (single) — IAP2 Spectrum (Inform → Empower)
-5. `diversity` (multi) — demographic groups to reach
-6. `stages-focus` (multi) — the 9 deliberation stages to strengthen
-7. `modes` (single) — face-to-face / online / hybrid
-8. `engagement-calc` (numberPair) — people reached vs. participating
-9. `criteria` (single) — self-selection vs. sortition
-10. `resources` (multi) — budget / staff / online tool
+1. `participants` (single → `size`) — deliberation size
+2. `engagement-depth` (single → `level`) — IAP2 spectrum
+3. `modes` (single → `mode`) — face-to-face / online / hybrid
+4. `criteria` (single → `criteria`) — self-selection vs. sortition
+5. `diversity` (multi → `diversity`) — demographic groups to reach
+6. `resources` (multi → `resources`) — budget / staff / platform
+7. `priorities` (rank → `principles`) — rank the 5 principles
 
 ## Editing the knowledge base (no code required)
 
-**`public/data/templates.csv`** — one row per template. `supports_principles` is a semicolon-separated list of principle names (`Inclusion`, `Equality`, `Plurality`, `Authenticity`, `Reflection`). This is the only link between a template and the ranking.
+Sign in at **`/admin`**. Anyone can create an account there, but editing requires membership of the `editors` team — grant it with `npm run appwrite:add-editor <email>`. Three tabs:
 
-**`public/data/tree.csv`** — one row per node. `match` supports: exact option value, `any`, threshold (`>=10000`, `<1000`), or `ratio<0.1` (for the engagement calculator). `parent_id` is blank for root nodes. A node is reached only when its parent is also reached.
+- **Recommendations** — create/edit/delete rows. Saves to Appwrite immediately; live for everyone with no deploy. The optional **body** field takes Markdown via a toolbar editor and appears only on the recommendation's own page, never on cards.
+- **Questions** — reorder, reword, retype, enable/disable, add, and delete questions, and choose which dimension supplies each one's options. A question's id is immutable once saved, because answers are stored under it. Disabling beats deleting when a question may come back.
+- **Parameters** — the dimensions themselves and their allowed values. Admins can create new dimensions (e.g. "Duration"), decide per dimension whether it filters results or is a descriptive tag, and add values to any of them. Slugs are immutable once saved (recommendations reference them by slug); edit the label instead. The six seeded dimensions are marked built-in and cannot be deleted, because `questions.ts` references them by key.
 
-The seed data in both files are **placeholders derived from the spec** and need review and refinement by the research team.
+A recommendation holds, per dimension, `any` / one value / a comma-separated list. It is shown when the user's answer fits every *matching* dimension.
+
+The seed data is a **placeholder derived from the spec** and needs review and refinement by the research team.
+
+## Appwrite
+
+```
+Database `dpdt`
+  recommendations  public read · editors team write
+  dimensions       public read · editors team write   (the parameter types themselves)
+  questions        public read · editors team write   (the questionnaire)
+  parameters       public read · editors team write   (allowed values per dimension)
+  responses        anyone create · editors team read  (one row per completed wizard run)
+  contacts         anyone create · editors team read  (one row per "Request help" submission)
+```
+
+**Why recommendations have no per-dimension columns.** Admins create dimensions at runtime, so a column per dimension would mean a schema migration per admin action. The six seeded dimensions keep real indexed columns (they map 1:1 to the CSV); anything an admin adds is stored in a JSON `tags` column. `src/lib/repo/recommendations.ts` merges both into `RecommendationRow.dims` on read and splits them on write, so no other file knows the difference.
+
+Every recommendation has its own page at `/recommendations/:id` (the Appwrite row id), reached by clicking a recommendation's name anywhere it appears.
+
+**Rendering bodies.** `src/engine/markdown.ts` implements a deliberately small Markdown subset instead of pulling in a parser plus a sanitizer. It escapes input first and emits a fixed tag set, so authored content cannot inject markup; `javascript:` and `data:` URLs are dropped. Its output is the only thing passed to `dangerouslySetInnerHTML`, and the rules are covered by `markdown.test.ts`.
+
+Responses store `answers` and `matched` as JSON strings, so changing the questionnaire never requires a schema migration.
+
+A help request in `contacts` links to its run twice — by `responseId` (exact) and by `sessionId` (always set, in case the response write had not finished). Submitting sends no notification; requests are read from the Appwrite console. See `docs/database.md`.
+
+Access lives in `src/lib/`: `appwrite.ts` (client) and `repo/*.ts` (one module per table). Nothing else in the app talks to Appwrite directly.
 
 ## Commands
 
 ```bash
-npm run dev      # local dev server
-npm run build    # type-check + production build → dist/
-npm run preview  # serve production build locally
-npm run test     # 15 engine unit tests
+npm run dev             # local dev server
+npm run build           # type-check + production build → dist/
+npm run preview         # serve production build locally
+npm run test            # vitest — covers the matching engine
+npm run appwrite:setup  # provision database, tables, indexes, permissions (idempotent)
+npm run appwrite:seed   # import recommendations.csv + parameters.json (--force to replace)
+npm run appwrite:add-editor <email>   # grant an existing user edit access
 ```
 
 ## Deployment
 
-Netlify. `netlify.toml` is configured: `npm run build`, publish `dist/`, SPA fallback to `index.html`. Connect the GitHub repo in the Netlify dashboard for continuous deployment on every push to `main`.
+**Appwrite Sites**, in the same project as the database. Pushing to `main` rebuilds and publishes; GitHub Actions (`.github/workflows/ci.yml`) type-checks, tests and builds in parallel but does not gate the deploy.
+
+Build settings, environment variables, the required SPA fallback file, and the Web-platform registration are documented in `docs/deployment.md`. Two things bite if missed: **fallback file must be `index.html`** (or deep links 404) and the **domain must be registered as a Web platform** (or every database read fails CORS).
+

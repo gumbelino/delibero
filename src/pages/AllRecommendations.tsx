@@ -1,30 +1,34 @@
 import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import type { RecommendationRow } from "../types";
+import { Link, useNavigate } from "react-router-dom";
+import type { DimensionDef, RecommendationRow } from "../types";
 
 interface Props {
   recommendations: RecommendationRow[];
+  /** Drives the filter controls; admins can add or remove these at runtime. */
+  dimensions: DimensionDef[];
 }
 
-type Filters = {
-  size: string;
-  level: string;
-  mode: string;
-  criteria: string;
-};
+/** Selected filter value per dimension key; empty string means "all". */
+type Filters = Record<string, string>;
 
-function uniqueValues(rows: RecommendationRow[], key: keyof RecommendationRow): string[] {
+/**
+ * Distinct values a dimension actually takes across the library. Rows may hold
+ * a comma-separated list, so split before collecting.
+ */
+function uniqueValues(rows: RecommendationRow[], key: string): string[] {
   const vals = new Set<string>();
   for (const row of rows) {
-    const v = row[key];
-    if (v && v !== "any") vals.add(v);
+    const raw = row.dims?.[key];
+    if (!raw || raw === "any") continue;
+    for (const v of raw.split(",").map((x) => x.trim()).filter(Boolean)) vals.add(v);
   }
   return Array.from(vals).sort();
 }
 
 function matchesFilter(rowVal: string, filterVal: string): boolean {
   if (!filterVal) return true;
-  return rowVal === filterVal || rowVal === "any";
+  if (!rowVal || rowVal === "any") return true;
+  return rowVal.split(",").map((v) => v.trim()).includes(filterVal);
 }
 
 function matchesSearch(row: RecommendationRow, query: string): boolean {
@@ -38,37 +42,32 @@ function matchesSearch(row: RecommendationRow, query: string): boolean {
   );
 }
 
-const FILTER_LABELS: Record<keyof Filters, string> = {
-  size: "Size",
-  level: "Level",
-  mode: "Mode",
-  criteria: "Criteria",
-};
-
-export function AllRecommendations({ recommendations }: Props) {
+export function AllRecommendations({ recommendations, dimensions }: Props) {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
-  const [filters, setFilters] = useState<Filters>({ size: "", level: "", mode: "", criteria: "" });
+  const [filters, setFilters] = useState<Filters>({});
 
-  const options = useMemo(() => ({
-    size: uniqueValues(recommendations, "size"),
-    level: uniqueValues(recommendations, "level"),
-    mode: uniqueValues(recommendations, "mode"),
-    criteria: uniqueValues(recommendations, "criteria"),
-  }), [recommendations]);
+  // Offer a filter only where the library actually varies — a dimension every
+  // row marks "any" produces an empty dropdown that does nothing.
+  const filterDims = useMemo(
+    () =>
+      dimensions
+        .map((d) => ({ dim: d, values: uniqueValues(recommendations, d.key) }))
+        .filter(({ values }) => values.length > 0),
+    [dimensions, recommendations],
+  );
 
   const filtered = useMemo(() =>
     recommendations.filter((row) =>
-      matchesFilter(row.size, filters.size) &&
-      matchesFilter(row.level, filters.level) &&
-      matchesFilter(row.mode, filters.mode) &&
-      matchesFilter(row.criteria, filters.criteria) &&
+      filterDims.every(({ dim }) =>
+        matchesFilter(row.dims?.[dim.key] ?? "any", filters[dim.key] ?? "")
+      ) &&
       matchesSearch(row, search)
     ),
-    [recommendations, filters, search]
+    [recommendations, filterDims, filters, search]
   );
 
-  function setFilter(key: keyof Filters, value: string) {
+  function setFilter(key: string, value: string) {
     setFilters((f) => ({ ...f, [key]: value }));
   }
 
@@ -90,15 +89,15 @@ export function AllRecommendations({ recommendations }: Props) {
           onChange={(e) => setSearch(e.target.value)}
         />
         <div className="all-recs-filters">
-          {(Object.keys(filters) as (keyof Filters)[]).map((key) => (
+          {filterDims.map(({ dim, values }) => (
             <select
-              key={key}
+              key={dim.key}
               className="all-recs-select"
-              value={filters[key]}
-              onChange={(e) => setFilter(key, e.target.value)}
+              value={filters[dim.key] ?? ""}
+              onChange={(e) => setFilter(dim.key, e.target.value)}
             >
-              <option value="">All {FILTER_LABELS[key]}</option>
-              {options[key].map((v) => (
+              <option value="">All {dim.label}</option>
+              {values.map((v) => (
                 <option key={v} value={v}>{v}</option>
               ))}
             </select>
@@ -111,8 +110,16 @@ export function AllRecommendations({ recommendations }: Props) {
       ) : (
         <ol className="results-list">
           {filtered.map((row, i) => (
-            <li key={i} className="rec-card">
-              <h3 className="rec-name">{row.name}</h3>
+            <li key={row.id ?? i} className="rec-card">
+              <h3 className="rec-name">
+                {row.id ? (
+                  <Link className="rec-link" to={`/recommendations/${row.id}`}>
+                    {row.name}
+                  </Link>
+                ) : (
+                  row.name
+                )}
+              </h3>
               <p className="rec-desc">{row.description}</p>
               {row.pros && (
                 <div className="rec-pros">

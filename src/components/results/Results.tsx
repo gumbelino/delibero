@@ -1,24 +1,54 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCircleQuestion } from "@fortawesome/free-solid-svg-icons";
-import type { Template, TreeNode, RecommendationRow } from "../../types";
+import type { DimensionDef, Question, RecommendationRow } from "../../types";
 import { useWizard } from "../../state/wizardStore";
 import { matchRecommendations } from "../../engine/match";
+import { isAppwriteConfigured } from "../../lib/appwrite";
+import { newSessionId, saveResponse } from "../../lib/repo/responses";
 import { ContactForm } from "./ContactForm";
 
 interface Props {
-  templates: Template[];
-  tree: TreeNode[];
   recommendations: RecommendationRow[];
+  /** Which dimensions constrain the results; admin-configurable at runtime. */
+  dimensions: DimensionDef[];
+  /** Needed to resolve which question feeds each matching dimension. */
+  questions: Question[];
 }
 
-export function Results({ templates: _templates, tree: _tree, recommendations }: Props) {
+export function Results({ recommendations, dimensions, questions }: Props) {
   const navigate = useNavigate();
   const { answers, back, reset } = useWizard();
   const [contactVisible, setContactVisible] = useState(true);
 
-  const matched = matchRecommendations(recommendations, answers as Record<string, unknown>);
+  const matched = matchRecommendations(
+    recommendations,
+    answers as Record<string, unknown>,
+    dimensions,
+    questions,
+  );
+
+  // One id per visit to the results screen, generated before the write so a
+  // help request can reference the run even if the write is still in flight.
+  const sessionId = useRef(newSessionId());
+  const [responseId, setResponseId] = useState<string | null>(null);
+
+  // Record the completed run once, for research analysis. Anonymous, fire and
+  // forget — a failed write never surfaces to the user.
+  const saved = useRef(false);
+  useEffect(() => {
+    if (saved.current || !isAppwriteConfigured) return;
+    saved.current = true;
+    void saveResponse({
+      sessionId: sessionId.current,
+      answers,
+      matched,
+      completed: true,
+    }).then(setResponseId);
+    // Intentionally runs only on first render of the results screen.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="results">
@@ -36,7 +66,7 @@ export function Results({ templates: _templates, tree: _tree, recommendations }:
           <p className="contact-card-sub">
             A team of researchers and deliberation designers will get in touch.
           </p>
-          <ContactForm answers={answers} />
+          <ContactForm sessionId={sessionId.current} responseId={responseId} />
         </div>
       )}
 
@@ -63,10 +93,18 @@ export function Results({ templates: _templates, tree: _tree, recommendations }:
       {matched.length > 0 && (
         <ol className="results-list">
           {matched.map(({ row, matchedOn }, i) => (
-            <li key={i} className="rec-card">
+            <li key={row.id ?? i} className="rec-card">
               <div className="rec-head">
                 <span className="rec-rank">{i + 1}</span>
-                <h3 className="rec-name">{row.name}</h3>
+                <h3 className="rec-name">
+                  {row.id ? (
+                    <Link className="rec-link" to={`/recommendations/${row.id}`}>
+                      {row.name}
+                    </Link>
+                  ) : (
+                    row.name
+                  )}
+                </h3>
               </div>
               <p className="rec-desc">{row.description}</p>
               {row.pros && (
