@@ -82,7 +82,8 @@ Sign in at **`/admin`**. Anyone can create an account there, but editing require
 
 - **Recommendations** — create/edit/delete rows. Saves to Appwrite immediately; live for everyone with no deploy. The optional **body** field takes Markdown via a toolbar editor and appears only on the recommendation's own page, never on cards.
 - **Questions** — reorder, reword, retype, enable/disable, add, and delete questions, and choose which dimension supplies each one's options. A question's id is immutable once saved, because answers are stored under it. Disabling beats deleting when a question may come back.
-- **Parameters** — the dimensions themselves and their allowed values. Admins can create new dimensions (e.g. "Duration"), decide per dimension whether it filters results or is a descriptive tag, and add values to any of them. Slugs are immutable once saved (recommendations reference them by slug); edit the label instead. The six seeded dimensions are marked built-in and cannot be deleted, because `questions.ts` references them by key.
+- **Parameters** — the dimensions themselves and their allowed values.
+- **Help requests** — people who asked to be contacted, with the answers that produced the request, an open/handled filter, and a handled toggle. Loads its own data (editors-only tables, so not part of `useData`). Admins can create new dimensions (e.g. "Duration"), decide per dimension whether it filters results or is a descriptive tag, and add values to any of them. Slugs are immutable once saved (recommendations reference them by slug); edit the label instead. The six seeded dimensions are marked built-in and cannot be deleted, because `questions.ts` references them by key.
 
 A recommendation holds, per dimension, `any` / one value / a comma-separated list. It is shown when the user's answer fits every *matching* dimension.
 
@@ -108,7 +109,7 @@ Every recommendation has its own page at `/recommendations/:id` (the Appwrite ro
 
 Responses store `answers` and `matched` as JSON strings, so changing the questionnaire never requires a schema migration.
 
-A help request in `contacts` links to its run twice — by `responseId` (exact) and by `sessionId` (always set, in case the response write had not finished). Submitting sends no notification; requests are read from the Appwrite console. See `docs/database.md`.
+A help request in `contacts` is managed at `/admin` → Help requests, and links to its run twice — by `responseId` (exact) and by `sessionId` (always set, in case the response write had not finished). Submitting sends no notification; requests are read from the Appwrite console. See `docs/database.md`.
 
 Access lives in `src/lib/`: `appwrite.ts` (client) and `repo/*.ts` (one module per table). Nothing else in the app talks to Appwrite directly.
 

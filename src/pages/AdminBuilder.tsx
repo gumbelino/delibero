@@ -10,6 +10,7 @@ import {
 import { RichTextEditor } from "../components/RichTextEditor";
 import { ParametersEditor } from "./ParametersEditor";
 import { QuestionsEditor } from "./QuestionsEditor";
+import { ContactsManager } from "./ContactsManager";
 
 interface Props {
   recommendations: RecommendationRow[];
@@ -214,9 +215,9 @@ export function AdminBuilder({
   const [addOpen, setAddOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<Filters>({});
-  const [tab, setTab] = useState<"recommendations" | "questions" | "parameters">(
-    "recommendations",
-  );
+  const [tab, setTab] = useState<
+    "recommendations" | "questions" | "parameters" | "requests"
+  >("recommendations");
   const [busy, setBusy] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -342,11 +343,20 @@ export function AdminBuilder({
         >
           Parameters
         </button>
+        <button
+          type="button"
+          className={`btn ${tab === "requests" ? "btn-secondary" : "btn-ghost"}`}
+          onClick={() => setTab("requests")}
+        >
+          Help requests
+        </button>
       </div>
 
       {saveError && <p className="app-status app-error">{saveError}</p>}
 
-      {tab === "questions" ? (
+      {tab === "requests" ? (
+        <ContactsManager questions={questions} />
+      ) : tab === "questions" ? (
         <QuestionsEditor
           questions={questions}
           dimensions={dimensions}
