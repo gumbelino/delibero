@@ -15,7 +15,7 @@ The two run independently. Actions is the safety net that tells you a push was b
 
 ### 1. Connect GitHub to Appwrite
 
-Console → **Sites** → *Create site* → *Connect Git repository*. The first time, this installs the Appwrite GitHub app; grant it access to `gumbelino/dpdt`.
+Console → **Sites** → *Create site* → *Connect Git repository*. The first time, this installs the Appwrite GitHub app; grant it access to `gumbelino/delibero`.
 
 This step cannot be scripted — it is an OAuth app installation.
 
@@ -41,7 +41,7 @@ Add under the site's **Settings → Environment variables**:
 |---|---|
 | `VITE_APPWRITE_ENDPOINT` | `https://fra.cloud.appwrite.io/v1` |
 | `VITE_APPWRITE_PROJECT_ID` | `delibero` |
-| `VITE_APPWRITE_DATABASE_ID` | `dpdt` |
+| `VITE_APPWRITE_DATABASE_ID` | `delibero` |
 
 Vite inlines these **at build time**, so changing one requires a redeploy, not just a restart.
 

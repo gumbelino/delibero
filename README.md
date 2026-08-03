@@ -1,118 +1,76 @@
-# DPDT — Deliberation Process Design Tool
+# delibero — Deliberation Process Design Tool
 
-A guided web app that helps government officials and practitioners design a deliberative
-process. Users answer a short questionnaire (one question at a time, with previous answers
-visible and editable) and receive **ranked, fully traceable recommendations** drawn from a
-set of deliberation design templates. Every recommendation explains *why* it was suggested,
-tracing back to the user's own answers and priorities.
+A guided web app that helps government officials and practitioners design a deliberative process. Users answer a questionnaire one question at a time, with previous answers visible and editable in a sidebar, and receive matched recommendations that explain *why* they were surfaced.
 
 - **Stack:** React + Vite + TypeScript, built to a static bundle.
-- **Hosting:** Netlify (static). No backend in v1 — all state lives in the browser; results
-  are exportable as JSON or printed to PDF.
-- **Design principle:** *no hidden scoring.* The only weights in the system come from the
-  user's own ranking of the five deliberative principles.
+- **Backend:** Appwrite Cloud — the knowledge base, the questionnaire itself, and anonymous responses.
+- **Hosting:** Appwrite Sites, deployed from `main`.
+- **Design principle:** *nothing is hidden in code.* Recommendations, questions, and the vocabularies behind them are data that researchers edit in the browser.
 
 ## Getting started
 
 ```bash
 npm install
-npm run dev      # local dev server (http://localhost:5173)
-npm run build    # type-check + production build into dist/
-npm run preview  # serve the production build locally
-npm run test     # run the recommendation-engine unit tests
+cp .env.example .env.local   # fill in the Appwrite values
+npm run dev                  # http://localhost:5173
 ```
 
-## Deploy (Netlify)
+| Command | |
+|---|---|
+| `npm run dev` | local dev server |
+| `npm run build` | type-check + production build into `dist/` |
+| `npm run preview` | serve the production build locally |
+| `npm run test` | unit tests (matching engine, Markdown renderer) |
+| `npm run appwrite:setup` | create/update the database schema — idempotent |
+| `npm run appwrite:seed` | import the seed files into empty tables |
+| `npm run appwrite:add-editor <email>` | grant an existing user edit access |
 
-`netlify.toml` is already configured (`npm run build` → publish `dist/`, with an SPA
-redirect). Connect the repo in Netlify, or run `netlify deploy --prod` with the CLI.
+The app reads exclusively from Appwrite. Without `VITE_APPWRITE_*` set it shows an error rather than falling back to bundled data, so a misconfigured deploy is obvious rather than silently stale.
 
 ## How recommendations work
 
 ```
-your answers ──(tree.csv)──▶ candidate templates ──(your principle ranking)──▶ ranked + explained
+questions ──▶ answers ──(dimensions × recommendations)──▶ matched recommendations
 ```
 
-1. **Decision tree (`public/data/tree.csv`)** decides which templates are *candidates*.
-2. **Ranking** orders the candidates by how well they support the principles you ranked
-   highest. A principle's weight is simply its rank position (1st = highest). Nothing else
-   is weighted — there are no magic numbers.
-3. **Traceability** — each recommendation shows the tree rule that nominated it and the
-   ranked principles it supports ("Why was this recommended to me?").
+A **dimension** is a way of classifying a recommendation (Size, Level, Mode, Stage…). Its allowed values are **parameters**. Each **question** is attached to a dimension, and its answer options *are* that dimension's values — so a question can never offer an answer that no recommendation can be tagged with.
 
-## Editing the recommendations (no code required)
+A recommendation declares, per dimension, which values it applies to: `any`, one value, or a comma-separated list. It is shown when the user's answers fit every *matching* dimension.
 
-Both data files live in `public/data/` and are plain CSVs you can edit in Excel or any
-spreadsheet. Re-deploy (or just reload in dev) to see changes.
+A dimension narrows results only when it is flagged for matching, has an enabled question attached, and that question was answered. Anything else is treated as "no constraint", so a half-configured dimension can never silently empty the results page.
 
-### `templates.csv` — the recommendation library
+## Editing the content (no code required)
 
-One row per template:
+Sign in at **`/admin`**. Anyone can create an account, but editing requires membership of the `editors` team — grant it with `npm run appwrite:add-editor <email>`. Everything saves immediately and is live for everyone; there is no deploy step.
 
-| column                | meaning                                                                 |
-| --------------------- | ----------------------------------------------------------------------- |
-| `id`                  | Stable identifier used by `tree.csv` (no spaces).                        |
-| `name`                | Display name.                                                           |
-| `description`         | Shown on the recommendation card. Wrap in quotes if it contains commas. |
-| `supports_principles` | Principles the template supports, separated by `;`. **This is the only link to ranking.** Use exactly: `Inclusion`, `Equality`, `Plurality`, `Authenticity`, `Reflection`. |
-| `citations`           | Citation keys separated by `;` (e.g. `24`). Optional.                   |
+| Tab | |
+|---|---|
+| **Recommendations** | Create, edit, delete. Includes an optional Markdown **body** shown only on the recommendation's own page. |
+| **Questions** | Reorder, reword, retype, enable/disable, add, delete; choose which dimension supplies each one's options. |
+| **Parameters** | The dimensions themselves and their allowed values. |
 
-### `tree.csv` — the decision tree (one row = one node)
+Slugs (a dimension's `key`, a value's `value`, a question's `id`) are immutable once saved, because recommendations and stored answers reference them. Labels are freely editable — that covers the common case of fixing wording.
 
-Read each row as a sentence:
-
-> *"Starting from `parent_id` (blank = a root), if the answer to `question_id` matches
-> `match`, enter this node; if `recommend` is filled in, recommend that template."*
-
-| column        | meaning                                                                       |
-| ------------- | ----------------------------------------------------------------------------- |
-| `node_id`     | Unique id for this node.                                                       |
-| `parent_id`   | Blank for a root node, or the `node_id` of a node that must be reached first.  |
-| `question_id` | Which question's answer this node tests (see list below).                      |
-| `match`       | How the answer must match (see below).                                         |
-| `recommend`   | A template `id` to recommend when reached. Leave blank for a pure gate node.   |
-
-**`match` can be:**
-
-- an exact option value — e.g. `online`, `sortition`, `youth` (for multi-select questions
-  this means "this option was selected");
-- `any` — matches whenever the question has any answer;
-- a threshold on a number — e.g. `>=10000`, `<1000`, `=500` (used with the `participants`
-  scale);
-- `ratio<0.1` — for the engagement calculator, compares participating ÷ reached.
-
-If no node matches a given set of answers, **all** templates become candidates (graceful
-fallback), and they are still ranked by the user's priorities.
-
-**Question ids** available for `question_id`: `priorities`, `participants`,
-`engagement-depth`, `diversity`, `stages-focus`, `modes`, `engagement-calc`, `criteria`,
-`resources`. (Their option values are defined in `src/data/questions.ts`.)
-
-> The seed `tree.csv` and `templates.csv` contain **reasonable placeholders derived from the
-> project spec.** They are meant to be reviewed and refined by the research team.
-
-## Editing the questionnaire
-
-The questions, their order, options, and help text are data in
-[`src/data/questions.ts`](src/data/questions.ts); educational content (the scaling
-trade-offs, the IAP2 spectrum, citations) is in
-[`src/data/content.ts`](src/data/content.ts). Reordering or adding a question is an edit to
-the `QUESTIONS` array — no component changes needed.
+Each recommendation also has its own page at `/recommendations/:id`.
 
 ## Project structure
 
 ```
-public/data/        templates.csv, tree.csv   (researcher-editable knowledge base)
-src/data/           questions.ts, content.ts  (questionnaire + educational copy)
-src/engine/         csv, tree, rank, rationale, recommend (+ tests)
-src/state/          wizard store + data loader
-src/components/      wizard, question renderers, results, sidebar
+scripts/            setup / seed / add-editor  (schema is code, idempotent)
+public/data/        seed CSV + JSON  (script input only — never fetched at runtime)
+src/lib/            appwrite client + one repo module per table
+src/engine/         match, markdown, csv export (+ tests)
+src/state/          wizard store, auth store, data loader
+src/components/     wizard, question renderers, results, sidebar, rich text editor
+src/pages/          landing, wizard, recommendations, recommendation, admin
 src/styles.css      THE single global stylesheet (no inline styles anywhere)
-docs/               source specifications and reference papers
+docs/               specifications, database and deployment reference
 ```
 
-## Roadmap (v2 ideas)
+## Documentation
 
-- Optional Firebase backend to store responses / contact details (the data layer is
-  isolated behind `src/state/useData.ts` and the engine, so adding persistence is contained).
-- Richer decision-tree authoring UI for non-technical editors.
+- [`docs/database.md`](docs/database.md) — schema, permissions, seeding, and the reasoning behind the data model
+- [`docs/deployment.md`](docs/deployment.md) — CI/CD, build settings, and the two settings that break the site if missed
+- [`CLAUDE.md`](CLAUDE.md) — working notes and conventions for this codebase
+
+The seed knowledge base is a **placeholder derived from the project spec** and still needs review by the research team.

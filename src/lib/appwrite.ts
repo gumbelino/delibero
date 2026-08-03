@@ -9,7 +9,7 @@ import { Client, Account, TablesDB, ID, Query, Permission, Role } from "appwrite
 const endpoint = import.meta.env.VITE_APPWRITE_ENDPOINT ?? "";
 const projectId = import.meta.env.VITE_APPWRITE_PROJECT_ID ?? "";
 
-export const DATABASE_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID ?? "dpdt";
+export const DATABASE_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID ?? "delibero";
 
 /** Table (collection) ids — kept in sync with scripts/setup-appwrite.mjs. */
 export const TABLES = {

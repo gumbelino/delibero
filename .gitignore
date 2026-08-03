@@ -7,3 +7,6 @@ dist
 .DS_Store
 .vite
 *.tsbuildinfo
+
+# Local database backups — contain response and contact data.
+backups/

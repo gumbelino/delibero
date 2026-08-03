@@ -1,10 +1,10 @@
-# DPDT — Deliberation Process Design Tool
+# delibero — Deliberation Process Design Tool
 
 A guided web app helping government officials and practitioners design a deliberative process. Users answer a questionnaire one question at a time (previous answers visible and editable in a sidebar) and receive matched, explained recommendations from a library of process-design recommendations.
 
 ## Decisions
 
-- **Stack:** React + Vite + TypeScript, static bundle deployed on Netlify.
+- **Stack:** React + Vite + TypeScript, static bundle deployed on Appwrite Sites.
 - **Backend: Appwrite Cloud, and only Appwrite.** The knowledge base and anonymous wizard responses live in Appwrite. There is no offline fallback: if Appwrite is unreachable the app shows an error rather than serving a stale bundled copy, which would hide an outage from an editor who had just saved. The files under `public/data` are seed input for the setup scripts only.
 - **Non-technical editability is a hard requirement.** Researchers edit recommendations, the questionnaire, and dimension vocabularies at `/admin` (signed in), or in Excel via `recommendations.csv` for a bulk re-seed. The questionnaire is data, not code — there is no `questions.ts`.
 - **Anyone may sign up; nobody gets edit rights by default.** A new account belongs to no team, so Appwrite rejects its writes and the app shows a "request access" screen. An administrator grants access with `npm run appwrite:add-editor`.
@@ -91,7 +91,7 @@ The seed data is a **placeholder derived from the spec** and needs review and re
 ## Appwrite
 
 ```
-Database `dpdt`
+Database `delibero`
   recommendations  public read · editors team write
   dimensions       public read · editors team write   (the parameter types themselves)
   questions        public read · editors team write   (the questionnaire)

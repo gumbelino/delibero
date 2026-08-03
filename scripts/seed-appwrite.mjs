@@ -24,7 +24,7 @@ dotenv.config({ path: [".env.local", ".env"] });
 const endpoint = process.env.APPWRITE_ENDPOINT ?? "https://fra.cloud.appwrite.io/v1";
 const projectId = process.env.APPWRITE_PROJECT_ID;
 const apiKey = process.env.APPWRITE_API_KEY;
-const databaseId = process.env.APPWRITE_DATABASE_ID ?? "dpdt";
+const databaseId = process.env.APPWRITE_DATABASE_ID ?? "delibero";
 const force = process.argv.includes("--force");
 
 /** Tables to touch this run; empty means all of them. */

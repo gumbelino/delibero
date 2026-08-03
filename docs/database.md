@@ -1,15 +1,15 @@
 # Database overview
 
-The DPDT backend is a single **Appwrite Cloud** project. Everything the app reads at runtime lives here — there is no offline or file-based fallback.
+The delibero backend is a single **Appwrite Cloud** project. Everything the app reads at runtime lives here — there is no offline or file-based fallback.
 
 | | |
 |---|---|
 | Project | `delibero` |
 | Region | Frankfurt (`https://fra.cloud.appwrite.io/v1`) |
-| Database | `dpdt` |
+| Database | `delibero` |
 | Tables | `recommendations`, `dimensions`, `parameters`, `questions`, `responses`, `contacts` |
 
-The free plan allows **one database per project**, which is why all six tables share `dpdt`. A separate staging environment therefore needs its own Appwrite project, not a second database.
+The free plan allows **one database per project**, which is why all six tables share `delibero`. A separate staging environment therefore needs its own Appwrite project, not a second database.
 
 > **Schema is code.** `scripts/setup-appwrite.mjs` is the source of truth: it creates the database, tables, columns, indexes, permissions, and the `editors` team, and is safe to re-run. Change the schema there and re-run it rather than clicking in the Appwrite console, so another environment can be rebuilt exactly.
 
@@ -246,7 +246,7 @@ The seed data is a **placeholder derived from the spec** and still needs review 
 |---|---|---|
 | `VITE_APPWRITE_ENDPOINT` | browser | `https://fra.cloud.appwrite.io/v1` |
 | `VITE_APPWRITE_PROJECT_ID` | browser | `delibero` |
-| `VITE_APPWRITE_DATABASE_ID` | browser | `dpdt` |
+| `VITE_APPWRITE_DATABASE_ID` | browser | `delibero` |
 | `APPWRITE_API_KEY` | scripts only | server key — **never** in the browser or the host's env |
 
 Vite inlines the `VITE_*` values at build time, so changing one requires a redeploy. They are not secrets: Appwrite's security comes from the table permissions above and from the project's registered Web platforms.

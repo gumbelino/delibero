@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Provisions the Appwrite Cloud backend for DPDT: database, tables, columns,
+ * Provisions the Appwrite Cloud backend for delibero: database, tables, columns,
  * indexes, permissions, and the `editors` team.
  *
  * This is the source of truth for the schema — prefer editing this file and
@@ -22,7 +22,7 @@ dotenv.config({ path: [".env.local", ".env"] });
 const endpoint = process.env.APPWRITE_ENDPOINT ?? "https://fra.cloud.appwrite.io/v1";
 const projectId = process.env.APPWRITE_PROJECT_ID;
 const apiKey = process.env.APPWRITE_API_KEY;
-const databaseId = process.env.APPWRITE_DATABASE_ID ?? "dpdt";
+const databaseId = process.env.APPWRITE_DATABASE_ID ?? "delibero";
 const EDITORS_TEAM_ID = "editors";
 
 if (!projectId || !apiKey) {
@@ -281,7 +281,7 @@ async function main() {
   await ensureExists(
     `database "${databaseId}"`,
     () => tablesDB.get({ databaseId }),
-    () => tablesDB.create({ databaseId, name: "DPDT" }),
+    () => tablesDB.create({ databaseId, name: "delibero" }),
   );
 
   for (const table of TABLES) {
@@ -345,7 +345,7 @@ async function main() {
     "\nDone.\n\nNext:\n" +
       "  1. npm run appwrite:seed        # import recommendations.csv + parameters.json\n" +
       "  2. In the console: Auth → create your user, then Teams → Editors → add them\n" +
-      "  3. Add the VITE_APPWRITE_* vars to .env.local and to Netlify\n",
+      "  3. Add the VITE_APPWRITE_* vars to .env.local and to the Appwrite Site\n",
   );
 }
 
