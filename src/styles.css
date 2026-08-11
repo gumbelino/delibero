@@ -18,6 +18,9 @@
   --color-primary-soft: #ebebeb;
   --color-accent: #555555;
   --color-error: #c0392b;
+  --color-error-hover: #a12f22;
+  --color-success: #15803d;
+  --color-success-hover: #126532;
   --color-footer-bg: #e8e8e8;
 
   /* Goal / principle colors */
@@ -152,23 +155,29 @@ a:hover {
   font-weight: 600;
 }
 
-/* A button on the header's dark ground: outlined, since btn-primary's fill is
-   this bar's own background. The global a:hover would recolour it to that
-   background too, so the hover state is stated explicitly. */
-.btn-nav {
-  padding: 6px 12px;
-  font-size: 13px;
+/* Icon-only link on the header's dark ground. The global a:hover would recolour
+   it to that background, so the hover state is stated explicitly. */
+.nav-icon-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  font-size: 16px;
   color: var(--color-primary-ink);
-  border-color: rgba(255, 255, 255, 0.45);
   background: none;
   text-decoration: none;
-  white-space: nowrap;
 }
 
-.btn-nav:hover {
+.nav-icon-link:hover {
   color: var(--color-primary-ink);
-  border-color: var(--color-primary-ink);
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.16);
+}
+
+/* On /admin the link stays put and reads as the current location. */
+.nav-icon-link.is-current {
+  background: rgba(255, 255, 255, 0.22);
 }
 
 .app-logo {
@@ -798,6 +807,32 @@ a.btn:hover {
 .btn-ghost:hover:not(:disabled) {
   border-color: var(--color-primary);
   color: var(--color-primary);
+}
+
+/* The one pair of buttons where colour carries meaning: approving and declining
+   an access request. Approve is filled because it is the expected action;
+   Decline is outlined, so a destructive click has to be aimed at. */
+.btn-approve {
+  background: var(--color-success);
+  color: #ffffff;
+  border-color: var(--color-success);
+}
+
+.btn-approve:hover:not(:disabled) {
+  background: var(--color-success-hover);
+  border-color: var(--color-success-hover);
+}
+
+.btn-decline {
+  background: transparent;
+  color: var(--color-error);
+  border-color: var(--color-error);
+}
+
+.btn-decline:hover:not(:disabled) {
+  background: var(--color-error);
+  color: #ffffff;
+  border-color: var(--color-error);
 }
 
 .btn:disabled {

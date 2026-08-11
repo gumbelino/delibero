@@ -68,8 +68,8 @@ permission to write" below.
 3. **The target comes from the database.** The caller passes a `requestId`, not
    a user id, so an editor can approve a pending request — not nominate an
    arbitrary account.
-4. **Scoped key.** `teams.write` + `users.read`, and with a dynamic key, only
-   for that one execution.
+4. **Scoped key.** Four scopes, no more (see below), and with a dynamic key,
+   only for that one execution.
 
 If the membership write fails, the request stays `pending`: a half-done approval
 that reads as finished is worse than one the editor can retry.
@@ -97,13 +97,27 @@ runtime itself is corrected. Set it to `node-22` and save again.
 
 ### Giving it permission to write
 
-The function needs `teams.write` and `users.read`. Two ways, depending on what
-your console offers:
+The function needs four scopes. Each one is a call it actually makes, and a
+missing one shows up as **"The approve-editor function crashed"** in the admin
+UI, with the real reason — `missing scopes ([...])` — only in the function's
+execution log:
+
+| Scope | Why |
+|---|---|
+| `teams.read` | `listMemberships`, to check the caller is an editor |
+| `teams.write` | `createMembership`, the grant itself |
+| `rows.read` | reads the `access_requests` row named by `requestId` |
+| `rows.write` | marks that row `approved` |
+
+`teams.read` is the easy one to miss: writing to a team does not imply reading
+it, so a function with only `teams.write` fails on its very first call.
+
+Two ways to grant them, depending on what your console offers:
 
 **Dynamic key (preferred, no secret).** Open the function → **Settings** tab →
-**Scopes** → tick `teams.write` and `users.read`. Scopes appear only *after* the
-function exists, not in the create wizard, which is the usual reason for not
-finding them. Appwrite then injects a scoped key per execution.
+**Scopes** → tick all four. Scopes appear only *after* the function exists, not
+in the create wizard, which is the usual reason for not finding them. Appwrite
+then injects a scoped key per execution.
 
 **A function variable (fallback).** If your console has no Scopes section,
 create an API key (console → Overview → Integrations → API keys) with those two

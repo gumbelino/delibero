@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Routes, Route, Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faGauge } from "@fortawesome/free-solid-svg-icons";
 import type { Question } from "./types";
 import { activeQuestions } from "./engine/questions";
 import { useData } from "./state/useData";
@@ -52,11 +54,17 @@ function NavUser() {
       <span className="app-user">
         Logged in as <strong>{user.name || user.email}</strong>
       </span>
-      {pathname !== "/admin" && (
-        <Link className="btn btn-nav" to="/admin">
-          Admin dashboard
-        </Link>
-      )}
+      {/* Shown on /admin too, so the header keeps the same shape everywhere —
+          there it just marks where you are. */}
+      <Link
+        className={`nav-icon-link${pathname === "/admin" ? " is-current" : ""}`}
+        to="/admin"
+        title="Admin dashboard"
+        aria-label="Admin dashboard"
+        aria-current={pathname === "/admin" ? "page" : undefined}
+      >
+        <FontAwesomeIcon icon={faGauge} />
+      </Link>
     </div>
   );
 }

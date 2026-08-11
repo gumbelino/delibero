@@ -195,7 +195,7 @@ export function AdminsManager({ currentUser }: Props) {
                 <div className="admin-card-actions">
                   <button
                     type="button"
-                    className="btn btn-secondary"
+                    className="btn btn-approve"
                     disabled={busyId === req.id}
                     onClick={() => void approve(req)}
                   >
@@ -203,7 +203,7 @@ export function AdminsManager({ currentUser }: Props) {
                   </button>
                   <button
                     type="button"
-                    className="btn btn-ghost"
+                    className="btn btn-decline"
                     disabled={busyId === req.id}
                     onClick={() => void decline(req)}
                   >
