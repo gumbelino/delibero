@@ -6,18 +6,9 @@
 import { tables, DATABASE_ID, TABLES, ID, Query } from "../appwrite";
 import type { DimensionDef } from "../../types";
 
-/**
- * Seeded dimensions, marked `builtin` so the admin UI refuses to delete them.
- * Which question feeds a dimension is recorded on the question, not here.
- */
-export const BUILTIN_DIMENSIONS: DimensionDef[] = [
-  { key: "size", label: "Size", matching: true, order: 0, builtin: true },
-  { key: "level", label: "Level", matching: true, order: 1, builtin: true },
-  { key: "mode", label: "Mode", matching: true, order: 2, builtin: true },
-  { key: "criteria", label: "Criteria", matching: true, order: 3, builtin: true },
-  { key: "stage", label: "Stage", matching: false, order: 4, builtin: true },
-  { key: "principles", label: "Principles", matching: false, order: 5, builtin: true },
-];
+// Every dimension is editable and deletable, seeded or not: the seed set is a
+// starting point for the research team, not a protected core. Which question
+// feeds a dimension is recorded on the question, not here.
 
 type Row = Record<string, unknown> & { $id: string };
 
@@ -29,7 +20,6 @@ function toDimension(row: Row): DimensionDef {
     description: String(row.description ?? "").trim() || undefined,
     matching: Boolean(row.matching),
     order: Number(row.order ?? 0),
-    builtin: Boolean(row.builtin),
   };
 }
 
@@ -40,7 +30,6 @@ function toPayload(d: DimensionDef) {
     description: d.description ?? "",
     matching: d.matching,
     order: d.order,
-    builtin: d.builtin,
   };
 }
 
@@ -58,7 +47,7 @@ export async function createDimension(d: DimensionDef): Promise<DimensionDef> {
     databaseId: DATABASE_ID,
     tableId: TABLES.dimensions,
     rowId: ID.unique(),
-    data: toPayload({ ...d, builtin: false }),
+    data: toPayload(d),
   });
   return toDimension(row as Row);
 }

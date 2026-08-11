@@ -53,9 +53,8 @@
       "order": 5,
       "enabled": true,
       "dimension": "resources",
-      "budgetInput": true,
       "title": "What does your budget allow?",
-      "help": "Select the resources you can realistically commit to. Optionally enter your total budget in CHF."
+      "help": "Select the resources you can realistically commit to."
     },
     {
       "id": "priorities",

@@ -12,6 +12,7 @@ import {
   updateDimension,
   toKey,
 } from "../lib/repo/dimensions";
+import { questionForDimension } from "../engine/questions";
 
 interface Props {
   dimensions: DimensionDef[];
@@ -22,6 +23,9 @@ interface Props {
 }
 
 const BLANK_DIM = { label: "", description: "", matching: false };
+
+/** `slugEdited` records that the author took the value over from the label. */
+const BLANK_VALUE = { value: "", label: "", description: "", slugEdited: false };
 
 /**
  * Editor for dimensions and their values.
@@ -34,7 +38,7 @@ export function ParametersEditor({ dimensions, questions, parameters, onRefresh 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [addingValueTo, setAddingValueTo] = useState<string | null>(null);
-  const [valueDraft, setValueDraft] = useState({ value: "", label: "", description: "" });
+  const [valueDraft, setValueDraft] = useState(BLANK_VALUE);
   const [addingDim, setAddingDim] = useState(false);
   const [dimDraft, setDimDraft] = useState(BLANK_DIM);
 
@@ -70,7 +74,6 @@ export function ParametersEditor({ dimensions, questions, parameters, onRefresh 
         description: dimDraft.description.trim() || undefined,
         matching: dimDraft.matching,
         order: dimensions.length,
-        builtin: false,
       });
       setDimDraft(BLANK_DIM);
       setAddingDim(false);
@@ -92,11 +95,28 @@ export function ParametersEditor({ dimensions, questions, parameters, onRefresh 
 
   async function removeDimension(dim: DimensionDef) {
     const count = parameters[dim.key]?.length ?? 0;
+
+    // Disabled questions count too: they are hidden, not gone, and deleting
+    // their dimension would break them silently if one is re-enabled later.
+    const attached = questions.filter((q) => q.dimension === dim.key);
+    const warning = attached.length
+      ? `\n\n⚠ ${attached.length === 1 ? "A question asks" : `${attached.length} questions ask`} for this dimension:\n` +
+        attached.map((q) => `  • ${q.title}${q.enabled ? "" : " (disabled)"}`).join("\n") +
+        "\n\nDeleting it leaves " +
+        (attached.length === 1 ? "that question" : "those questions") +
+        " with no options. Attach another dimension to " +
+        (attached.length === 1 ? "it" : "them") +
+        " in the Questions tab, or disable " +
+        (attached.length === 1 ? "it" : "them") +
+        ", first."
+      : "";
+
     if (
       !window.confirm(
         `Delete the "${dim.label}" dimension and its ${count} value(s)?\n\n` +
           "Recommendations tagged with it keep the tag in the database but it " +
-          "will no longer be shown or used for matching.",
+          "will no longer be shown or used for matching." +
+          warning,
       )
     )
       return;
@@ -109,9 +129,31 @@ export function ParametersEditor({ dimensions, questions, parameters, onRefresh 
 
   /* ---- Values ------------------------------------------------------------ */
 
+  /**
+   * The slug follows the label until someone edits it by hand, after which it
+   * is theirs — retyping the label must not silently undo their choice.
+   */
+  function setLabelDraft(label: string) {
+    setValueDraft((d) => ({
+      ...d,
+      label,
+      value: d.slugEdited ? d.value : toKey(label),
+    }));
+  }
+
+  function cancelValue() {
+    setValueDraft(BLANK_VALUE);
+    setAddingValueTo(null);
+  }
+
   async function addValue(dimension: string) {
     const value = valueDraft.value.trim();
     if (!value) return;
+
+    if ((parameters[dimension] ?? []).some((p) => p.value === value)) {
+      setError(`"${dimension}" already has a value "${value}".`);
+      return;
+    }
     await run(async () => {
       await createParameter({
         dimension,
@@ -120,7 +162,7 @@ export function ParametersEditor({ dimensions, questions, parameters, onRefresh 
         description: valueDraft.description.trim() || undefined,
         order: parameters[dimension]?.length ?? 0,
       });
-      setValueDraft({ value: "", label: "", description: "" });
+      setValueDraft(BLANK_VALUE);
       setAddingValueTo(null);
     });
   }
@@ -232,7 +274,8 @@ export function ParametersEditor({ dimensions, questions, parameters, onRefresh 
 
       {dimensions.map((dim) => {
         const items = parameters[dim.key] ?? [];
-        const question = questions.find((q) => q.enabled && q.dimension === dim.key);
+        const question = questionForDimension(questions, dim.key);
+        const attached = questions.filter((q) => q.dimension === dim.key);
         const unwired = dim.matching && !question;
         return (
           <section key={dim.id ?? dim.key} className="admin-param-group">
@@ -242,18 +285,20 @@ export function ParametersEditor({ dimensions, questions, parameters, onRefresh 
                 <span className={`admin-tag${dim.matching ? "" : " admin-tag-any"}`}>
                   {dim.matching ? "matching" : "tag only"}
                 </span>
-                {dim.builtin && <span className="admin-tag admin-tag-any">built-in</span>}
+                {attached.length > 0 && (
+                  <span className="admin-tag admin-tag-any">
+                    used by {attached.length} question{attached.length === 1 ? "" : "s"}
+                  </span>
+                )}
               </h3>
-              {!dim.builtin && (
-                <button
-                  type="button"
-                  className="btn btn-ghost admin-delete"
-                  disabled={busy}
-                  onClick={() => void removeDimension(dim)}
-                >
-                  Delete dimension
-                </button>
-              )}
+              <button
+                type="button"
+                className="btn btn-ghost admin-delete"
+                disabled={busy}
+                onClick={() => void removeDimension(dim)}
+              >
+                Delete dimension
+              </button>
             </div>
 
             {dim.description && <p className="admin-param-hint">{dim.description}</p>}
@@ -270,25 +315,23 @@ export function ParametersEditor({ dimensions, questions, parameters, onRefresh 
             </p>
 
 
-            {!dim.builtin && (
-              <div className="admin-dim-controls">
-                <label className="rec-check">
-                  <input
-                    type="checkbox"
-                    checked={dim.matching}
-                    disabled={busy}
-                    onChange={(e) => void setMatching(dim, e.target.checked)}
-                  />
-                  <span>Use for matching</span>
-                </label>
+            <div className="admin-dim-controls">
+              <label className="rec-check">
                 <input
-                  className="rec-form-input"
-                  defaultValue={dim.label}
+                  type="checkbox"
+                  checked={dim.matching}
                   disabled={busy}
-                  onBlur={(e) => void renameDimension(dim, e.target.value.trim())}
+                  onChange={(e) => void setMatching(dim, e.target.checked)}
                 />
-              </div>
-            )}
+                <span>Use for matching</span>
+              </label>
+              <input
+                className="rec-form-input"
+                defaultValue={dim.label}
+                disabled={busy}
+                onBlur={(e) => void renameDimension(dim, e.target.value.trim())}
+              />
+            </div>
 
             <ul className="admin-param-list">
               {items.map((param) => (
@@ -317,15 +360,9 @@ export function ParametersEditor({ dimensions, questions, parameters, onRefresh 
                 <div className="admin-param-add">
                   <input
                     className="rec-form-input"
-                    placeholder="value (e.g. very-large)"
-                    value={valueDraft.value}
-                    onChange={(e) => setValueDraft((d) => ({ ...d, value: e.target.value }))}
-                  />
-                  <input
-                    className="rec-form-input"
                     placeholder="Label shown to users"
                     value={valueDraft.label}
-                    onChange={(e) => setValueDraft((d) => ({ ...d, label: e.target.value }))}
+                    onChange={(e) => setLabelDraft(e.target.value)}
                   />
                   <input
                     className="rec-form-input"
@@ -333,6 +370,15 @@ export function ParametersEditor({ dimensions, questions, parameters, onRefresh 
                     value={valueDraft.description}
                     onChange={(e) =>
                       setValueDraft((d) => ({ ...d, description: e.target.value }))
+                    }
+                  />
+                  <input
+                    className="rec-form-input admin-param-slug"
+                    placeholder="value"
+                    title="The permanent slug recommendations are tagged with. Derived from the label; edit it if you want something different."
+                    value={valueDraft.value}
+                    onChange={(e) =>
+                      setValueDraft((d) => ({ ...d, value: e.target.value, slugEdited: true }))
                     }
                   />
                   <button
@@ -346,7 +392,7 @@ export function ParametersEditor({ dimensions, questions, parameters, onRefresh 
                   <button
                     type="button"
                     className="btn btn-ghost"
-                    onClick={() => setAddingValueTo(null)}
+                    onClick={cancelValue}
                   >
                     Cancel
                   </button>
@@ -356,7 +402,10 @@ export function ParametersEditor({ dimensions, questions, parameters, onRefresh 
                   type="button"
                   className="btn btn-ghost"
                   disabled={busy}
-                  onClick={() => setAddingValueTo(dim.key)}
+                  onClick={() => {
+                    setValueDraft(BLANK_VALUE);
+                    setAddingValueTo(dim.key);
+                  }}
                 >
                   + Add value
                 </button>

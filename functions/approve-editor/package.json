@@ -1,0 +1,13 @@
+{
+  "name": "approve-editor",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/main.js",
+  "dependencies": {
+    "node-appwrite": "^27.1.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

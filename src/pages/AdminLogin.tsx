@@ -104,7 +104,7 @@ export function AdminLogin() {
 
         {error && <p className="app-status app-error">{error}</p>}
 
-        <button type="submit" className="btn btn-primary" disabled={busy}>
+        <button type="submit" className="btn btn-primary admin-login-submit" disabled={busy}>
           {busy ? "Working…" : signup ? "Create account" : "Sign in"}
         </button>
       </form>

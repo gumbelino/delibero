@@ -46,7 +46,6 @@ function toQuestion(row: Row): Question {
     help: String(row.help ?? "").trim() || undefined,
     citation: String(row.citation ?? "").trim() || undefined,
     infoKey: String(row.infoKey ?? "").trim() || undefined,
-    budgetInput: Boolean(row.budgetInput),
     fields: parseFields(row.fields),
   };
 }
@@ -62,7 +61,6 @@ function toPayload(q: Question) {
     help: q.help ?? "",
     citation: q.citation ?? "",
     infoKey: q.infoKey ?? "",
-    budgetInput: Boolean(q.budgetInput),
     fields: q.fields ? JSON.stringify(q.fields) : "",
   };
 }
@@ -141,7 +139,5 @@ export function withOptions(questions: Question[], parameters: ParameterSet): Qu
   });
 }
 
-/** The questions the wizard should actually render, in order. */
-export function activeQuestions(questions: Question[]): Question[] {
-  return questions.filter((q) => q.enabled).sort((a, b) => a.order - b.order);
-}
+// activeQuestions / questionForDimension / taggableDimensions live in
+// src/engine/questions.ts — they are pure rules, not data access.

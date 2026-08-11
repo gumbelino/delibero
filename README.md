@@ -23,7 +23,8 @@ npm run dev                  # http://localhost:5173
 | `npm run test` | unit tests (matching engine, Markdown renderer) |
 | `npm run appwrite:setup` | create/update the database schema — idempotent |
 | `npm run appwrite:seed` | import the seed files into empty tables |
-| `npm run appwrite:add-editor <email>` | grant an existing user edit access |
+| `npm run appwrite:add-editor <email>` | create the first editor (and top up an existing one with the `owner` role) |
+| `npm run appwrite:test-email <email>` | send one real email through the project's SMTP ([docs/smtp.md](docs/smtp.md)) |
 
 The app reads exclusively from Appwrite. Without `VITE_APPWRITE_*` set it shows an error rather than falling back to bundled data, so a misconfigured deploy is obvious rather than silently stale.
 
@@ -41,7 +42,7 @@ A dimension narrows results only when it is flagged for matching, has an enabled
 
 ## Editing the content (no code required)
 
-Sign in at **`/admin`**. Anyone can create an account, but editing requires membership of the `editors` team — grant it with `npm run appwrite:add-editor <email>`. Everything saves immediately and is live for everyone; there is no deploy step.
+Sign in at **`/admin`**. Anyone can create an account, but editing requires membership of the `editors` team. New accounts request access from the app and an existing editor approves them under **Manage admins** ([docs/admins.md](docs/admins.md)); `npm run appwrite:add-editor <email>` creates the first editor. Everything saves immediately and is live for everyone; there is no deploy step.
 
 | Tab | |
 |---|---|

@@ -84,3 +84,25 @@ The repo previously deployed to Netlify; `netlify.toml` has been removed. To fin
 3. Delete the Netlify site, or at least disconnect it from the repo, so two hosts do not serve different versions of the app.
 
 Leaving the Netlify site connected is the main risk here: it keeps building from `main` without the `VITE_APPWRITE_*` variables, so it would serve a copy that cannot reach the database.
+
+---
+
+## The approve-editor function
+
+The site is not the only thing deployed from this repo. `functions/approve-editor`
+is an Appwrite Function that grants editor access server-side — a browser SDK can
+only invite someone to a team, never add them.
+
+It deploys from the same repository and the same push to `main`, but it is a
+separate resource: console → **Functions → Create function → Connect a
+repository**, root directory `functions/approve-editor`, entrypoint
+`src/main.js`, build command `npm install`, runtime `node-22`.
+
+Two settings matter for security, and neither is the default:
+
+- **Execute access** must be `team:editors`, not "any".
+- **Scopes** (function → Settings → Scopes, only visible once it exists) must be
+  `teams.write` and `users.read`. Consoles without that section can instead hold
+  an API key in a function variable — see [`admins.md`](admins.md).
+
+With scopes it needs no stored API key: Appwrite injects one per execution.

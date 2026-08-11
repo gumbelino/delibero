@@ -7,14 +7,14 @@ function q(id: string, dimension: string, enabled = true): Question {
 }
 
 const size: DimensionDef = {
-  key: "size", label: "Size", matching: true, order: 0, builtin: true,
+  key: "size", label: "Size", matching: true, order: 0,
 };
 const stage: DimensionDef = {
-  key: "stage", label: "Stage", matching: false, order: 1, builtin: true,
+  key: "stage", label: "Stage", matching: false, order: 1,
 };
 /** An admin-created dimension with its own question. */
 const duration: DimensionDef = {
-  key: "duration", label: "Duration", matching: true, order: 2, builtin: false,
+  key: "duration", label: "Duration", matching: true, order: 2,
 };
 
 function rec(name: string, dims: Record<string, string>): RecommendationRow {

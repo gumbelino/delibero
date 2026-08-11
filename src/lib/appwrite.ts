@@ -19,10 +19,19 @@ export const TABLES = {
   parameters: "parameters",
   responses: "responses",
   contacts: "contacts",
+  accessRequests: "access_requests",
 } as const;
 
 /** Team whose members may edit the knowledge base. */
 export const EDITORS_TEAM_ID = "editors";
+
+/**
+ * Server-side functions. Ids must match what the Appwrite console calls them —
+ * unlike tables, nothing in this repo provisions them; see docs/admins.md.
+ */
+export const FUNCTIONS = {
+  approveEditor: import.meta.env.VITE_APPWRITE_APPROVE_FN ?? "approve-editor",
+} as const;
 
 export const isAppwriteConfigured = Boolean(endpoint && projectId);
 

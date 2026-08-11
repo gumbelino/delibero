@@ -46,15 +46,30 @@ async function main() {
 
   const user = found.users[0];
   const members = await teams.listMemberships({ teamId: EDITORS_TEAM_ID });
-  if (members.memberships.some((m) => m.userId === user.$id)) {
-    console.log(`${email} is already an editor.`);
+  const existing = members.memberships.find((m) => m.userId === user.$id);
+
+  // `owner` is what lets an editor approve and remove other editors from the
+  // browser under /admin → Manage admins; Appwrite restricts membership writes
+  // to team owners. Members created before that tab existed only hold
+  // "editor", so top them up here rather than in a one-off migration script.
+  if (existing) {
+    if (existing.roles.includes("owner")) {
+      console.log(`${email} is already an editor.`);
+      return;
+    }
+    await teams.updateMembership({
+      teamId: EDITORS_TEAM_ID,
+      membershipId: existing.$id,
+      roles: [...new Set([...existing.roles, "editor", "owner"])],
+    });
+    console.log(`${email} was already an editor; granted the owner role so they can manage admins.`);
     return;
   }
 
   await teams.createMembership({
     teamId: EDITORS_TEAM_ID,
     userId: user.$id,
-    roles: ["editor"],
+    roles: ["editor", "owner"],
   });
   console.log(`${email} can now edit the knowledge base at /admin.`);
 }

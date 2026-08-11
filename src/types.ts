@@ -57,8 +57,6 @@ export interface Question {
   citation?: string;
   /** Rich educational content key for `info` questions (see content.ts). */
   infoKey?: string;
-  /** If true, render an optional CHF budget number input alongside the options. */
-  budgetInput?: boolean;
 }
 
 /**
@@ -67,7 +65,6 @@ export interface Question {
  * - single:     string (selected option value)
  * - multi:      string[] (selected option values)
  * - numberPair: Record<string, number>
- * - number:     plain number (e.g. optional budget field)
  */
 export type AnswerValue = string | string[] | Record<string, number> | number;
 
@@ -104,8 +101,10 @@ export interface RecommendationRow {
 }
 
 /**
- * A dimension admins can create, rename, or delete. The six seeded ones are
- * marked `builtin` because the questionnaire references them by key.
+ * A dimension admins can create, rename, or delete. Seeded dimensions have no
+ * special status — the seed set is a starting point, not a protected core — but
+ * deleting one that a question asks for leaves that question with no options,
+ * so the editor warns first.
  */
 export interface DimensionDef {
   id?: string;
@@ -119,8 +118,6 @@ export interface DimensionDef {
    */
   matching: boolean;
   order: number;
-  /** Seeded dimensions the questionnaire depends on; cannot be deleted. */
-  builtin: boolean;
 }
 
 /** One allowed value of a dimension, stored in the Appwrite `parameters` table. */
@@ -142,6 +139,28 @@ export interface Parameter {
 
 /** Parameter values grouped by the dimension they belong to. */
 export type ParameterSet = Record<DimensionId, Parameter[]>;
+
+export type AccessRequestStatus = "pending" | "approved" | "declined";
+
+/** Someone who created an account and asked to be made an editor. */
+export interface AccessRequest {
+  id: string;
+  userId: string;
+  email: string;
+  name?: string;
+  status: AccessRequestStatus;
+  createdAt?: string;
+}
+
+/** A member of the `editors` team, as the browser sees them. */
+export interface Editor {
+  membershipId: string;
+  userId: string;
+  email: string;
+  name: string;
+  roles: string[];
+  joinedAt?: string;
+}
 
 /** A recommendation matched against user answers. */
 export interface MatchedRecommendation {

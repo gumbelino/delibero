@@ -1,5 +1,4 @@
 import type { Question } from "../../types";
-import { useWizard } from "../../state/wizardStore";
 
 interface Props {
   question: Question;
@@ -9,10 +8,6 @@ interface Props {
 
 export function MultiSelect({ question, value, onChange }: Props) {
   const selected = value ?? [];
-  const { answers, setAnswer } = useWizard();
-  const budgetValue = question.budgetInput
-    ? ((answers[`${question.id}-budget`] as unknown as number | undefined) ?? "")
-    : "";
 
   const toggle = (optValue: string) => {
     if (selected.includes(optValue)) {
@@ -62,49 +57,28 @@ export function MultiSelect({ question, value, onChange }: Props) {
   }
 
   return (
-    <div>
-      <div className="options options-stack" role="group" aria-label={question.title}>
-        {question.options?.map((opt) => {
-          const isOn = selected.includes(opt.value);
-          return (
-            <button
-              key={opt.value}
-              type="button"
-              role="checkbox"
-              aria-checked={isOn}
-              className={isOn ? "option option-selected" : "option"}
-              onClick={() => toggle(opt.value)}
-            >
-              <span className="option-check" aria-hidden="true">
-                {isOn ? "✓" : ""}
-              </span>
-              <span className="option-body">
-                <span className="option-label">{opt.label}</span>
-                {opt.description && <span className="option-desc">{opt.description}</span>}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-      {question.budgetInput && (
-        <div className="budget-input-row">
-          <label className="budget-input-label" htmlFor={`budget-${question.id}`}>
-            Budget in CHF (optional)
-          </label>
-          <input
-            id={`budget-${question.id}`}
-            type="number"
-            className="budget-input"
-            placeholder="e.g. 50000"
-            min={0}
-            value={budgetValue}
-            onChange={(e) => {
-              const n = e.target.valueAsNumber;
-              setAnswer(`${question.id}-budget`, isNaN(n) ? 0 : n);
-            }}
-          />
-        </div>
-      )}
+    <div className="options options-stack" role="group" aria-label={question.title}>
+      {question.options?.map((opt) => {
+        const isOn = selected.includes(opt.value);
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            role="checkbox"
+            aria-checked={isOn}
+            className={isOn ? "option option-selected" : "option"}
+            onClick={() => toggle(opt.value)}
+          >
+            <span className="option-check" aria-hidden="true">
+              {isOn ? "✓" : ""}
+            </span>
+            <span className="option-body">
+              <span className="option-label">{opt.label}</span>
+              {opt.description && <span className="option-desc">{opt.description}</span>}
+            </span>
+          </button>
+        );
+      })}
     </div>
   );
 }

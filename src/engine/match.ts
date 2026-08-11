@@ -4,6 +4,7 @@ import type {
   Question,
   RecommendationRow,
 } from "../types";
+import { questionForDimension } from "./questions";
 
 function fits(rowVal: string, answerVal: string): boolean {
   if (!rowVal || rowVal === "any") return true;
@@ -29,7 +30,7 @@ function activeDimensions(
   for (const dim of dimensions) {
     if (!dim.matching) continue;
 
-    const question = questions.find((q) => q.enabled && q.dimension === dim.key);
+    const question = questionForDimension(questions, dim.key);
     if (!question) continue;
 
     const answer = answers[question.id];

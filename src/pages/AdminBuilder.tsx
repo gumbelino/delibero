@@ -7,10 +7,13 @@ import {
   deleteRecommendation,
   updateRecommendation,
 } from "../lib/repo/recommendations";
-import { RichTextEditor } from "../components/RichTextEditor";
+import { taggableDimensions } from "../engine/questions";
+import { RecForm, blankRow, parseDim, toDimensions } from "../components/RecForm";
 import { ParametersEditor } from "./ParametersEditor";
 import { QuestionsEditor } from "./QuestionsEditor";
 import { ContactsManager } from "./ContactsManager";
+import { AdminsManager } from "./AdminsManager";
+import { VerifyEmailNotice } from "../components/VerifyEmailNotice";
 
 interface Props {
   recommendations: RecommendationRow[];
@@ -18,168 +21,10 @@ interface Props {
   dimensions: DimensionDef[];
   parameters: ParameterSet;
   questions: Question[];
+  /** The signed-in editor, for the Manage admins tab. */
+  currentUser: { id: string; email: string; name: string; emailVerified: boolean };
   onRefresh: () => Promise<void>;
   onSignOut: () => void;
-}
-
-/** A dimension paired with its currently allowed values. */
-interface Dimension {
-  key: string;
-  label: string;
-  values: string[];
-}
-
-function toDimensions(dimensions: DimensionDef[], parameters: ParameterSet): Dimension[] {
-  return dimensions.map((d) => ({
-    key: d.key,
-    label: d.label,
-    values: (parameters[d.key] ?? []).map((p) => p.value),
-  }));
-}
-
-function blankRow(dimensions: DimensionDef[]): RecommendationRow {
-  return {
-    name: "", description: "", pros: "", cons: "", body: "",
-    dims: Object.fromEntries(dimensions.map((d) => [d.key, "any"])),
-  };
-}
-
-/** "any"/"" → [], "small,medium" → ["small","medium"]. */
-function parseDim(val: string): string[] {
-  const t = (val ?? "").trim();
-  if (!t || t === "any") return [];
-  return t.split(",").map((s) => s.trim()).filter(Boolean);
-}
-
-/** [] → "any", ["small","medium"] → "small,medium". */
-function toDim(selected: string[]): string {
-  return selected.length === 0 ? "any" : selected.join(",");
-}
-
-/* ---- Reusable create/edit form ------------------------------------------- */
-
-function RecForm({
-  initial, submitLabel, dimensions, onSubmit, onCancel,
-}: {
-  initial: RecommendationRow;
-  submitLabel: string;
-  /** All six dimensions, in display order. */
-  dimensions: Dimension[];
-  onSubmit: (row: RecommendationRow) => void;
-  onCancel?: () => void;
-}) {
-  const [draft, setDraft] = useState<RecommendationRow>(initial);
-
-  function set<K extends keyof RecommendationRow>(key: K, value: RecommendationRow[K]) {
-    setDraft((d) => ({ ...d, [key]: value }));
-  }
-
-  function toggleDim(key: string, value: string) {
-    const current = parseDim(draft.dims?.[key] ?? "any");
-    const next = current.includes(value)
-      ? current.filter((v) => v !== value)
-      : [...current, value];
-    setDraft((d) => ({ ...d, dims: { ...d.dims, [key]: toDim(next) } }));
-  }
-
-  function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!draft.name.trim()) return;
-    onSubmit({ ...draft, name: draft.name.trim() });
-  }
-
-  return (
-    <form className="rec-form" onSubmit={submit}>
-      <div className="rec-form-field">
-        <label className="rec-form-label">Name</label>
-        <input
-          className="rec-form-input"
-          value={draft.name}
-          onChange={(e) => set("name", e.target.value)}
-          placeholder="Recommendation name"
-          required
-        />
-      </div>
-
-      <div className="rec-form-field">
-        <label className="rec-form-label">Description</label>
-        <textarea
-          className="rec-form-textarea"
-          value={draft.description}
-          onChange={(e) => set("description", e.target.value)}
-          placeholder="What this recommendation is."
-          rows={2}
-        />
-      </div>
-
-      <div className="rec-form-dims">
-        {dimensions.map((dim) => {
-          const selected = parseDim(draft.dims?.[dim.key] ?? "any");
-          return (
-            <fieldset key={dim.key} className="rec-form-dim">
-              <legend className="rec-form-label">
-                {dim.label} {selected.length === 0 && <span className="rec-form-any">any</span>}
-              </legend>
-              <div className="rec-form-checks">
-                {dim.values.length === 0 && (
-                  <span className="rec-form-any">No values defined — add some under Parameters.</span>
-                )}
-                {dim.values.map((v) => (
-                  <label key={v} className="rec-check">
-                    <input
-                      type="checkbox"
-                      checked={selected.includes(v)}
-                      onChange={() => toggleDim(dim.key, v)}
-                    />
-                    <span>{v}</span>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-          );
-        })}
-      </div>
-
-      <div className="rec-form-row">
-        <div className="rec-form-field">
-          <label className="rec-form-label">Pros</label>
-          <textarea
-            className="rec-form-textarea"
-            value={draft.pros}
-            onChange={(e) => set("pros", e.target.value)}
-            rows={2}
-          />
-        </div>
-        <div className="rec-form-field">
-          <label className="rec-form-label">Cons</label>
-          <textarea
-            className="rec-form-textarea"
-            value={draft.cons}
-            onChange={(e) => set("cons", e.target.value)}
-            rows={2}
-          />
-        </div>
-      </div>
-
-      <div className="rec-form-field">
-        <label className="rec-form-label">
-          Body <span className="rec-form-any">optional · shown only on the recommendation page</span>
-        </label>
-        <RichTextEditor value={draft.body} onChange={(body) => set("body", body)} />
-      </div>
-
-      <div className="rec-form-actions">
-        <button type="submit" className="btn btn-primary" disabled={!draft.name.trim()}>
-          {submitLabel}
-        </button>
-        {onCancel && (
-          <button type="button" className="btn btn-ghost" onClick={onCancel}>
-            Cancel
-          </button>
-        )}
-      </div>
-    </form>
-  );
 }
 
 /* ---- Filtering (mirrors AllRecommendations) ------------------------------ */
@@ -207,7 +52,7 @@ function matchesSearch(row: RecommendationRow, query: string): boolean {
 /* ---- Page ---------------------------------------------------------------- */
 
 export function AdminBuilder({
-  recommendations, dimensions, parameters, questions, onRefresh, onSignOut,
+  recommendations, dimensions, parameters, questions, currentUser, onRefresh, onSignOut,
 }: Props) {
   const navigate = useNavigate();
   const [rows, setRows] = useState<RecommendationRow[]>(recommendations);
@@ -216,18 +61,23 @@ export function AdminBuilder({
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<Filters>({});
   const [tab, setTab] = useState<
-    "recommendations" | "questions" | "parameters" | "requests"
+    "recommendations" | "questions" | "parameters" | "requests" | "admins"
   >("recommendations");
   const [busy, setBusy] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  // Every dimension is offered when tagging; only matching ones become filters,
-  // since filtering by a descriptive tag would not tell an editor anything the
-  // search box does not.
-  const allDims = useMemo(() => toDimensions(dimensions, parameters), [dimensions, parameters]);
+  // Every live dimension is offered when tagging; only matching ones become
+  // filters, since filtering by a descriptive tag would not tell an editor
+  // anything the search box does not. A matching dimension whose question is
+  // disabled is dead — it cannot narrow anything — so it is offered nowhere.
+  const liveDims = useMemo(
+    () => taggableDimensions(dimensions, questions),
+    [dimensions, questions],
+  );
+  const allDims = useMemo(() => toDimensions(liveDims, parameters), [liveDims, parameters]);
   const filterDims = useMemo(
-    () => toDimensions(dimensions.filter((d) => d.matching), parameters),
-    [dimensions, parameters],
+    () => toDimensions(liveDims.filter((d) => d.matching), parameters),
+    [liveDims, parameters],
   );
 
   // Re-seed when the loaded data changes identity.
@@ -321,6 +171,8 @@ export function AdminBuilder({
         </button>
       </header>
 
+      {!currentUser.emailVerified && <VerifyEmailNotice email={currentUser.email} />}
+
       <div className="admin-tabs no-print">
         <button
           type="button"
@@ -350,11 +202,20 @@ export function AdminBuilder({
         >
           Help requests
         </button>
+        <button
+          type="button"
+          className={`btn ${tab === "admins" ? "btn-secondary" : "btn-ghost"}`}
+          onClick={() => setTab("admins")}
+        >
+          Manage admins
+        </button>
       </div>
 
       {saveError && <p className="app-status app-error">{saveError}</p>}
 
-      {tab === "requests" ? (
+      {tab === "admins" ? (
+        <AdminsManager currentUser={currentUser} />
+      ) : tab === "requests" ? (
         <ContactsManager questions={questions} />
       ) : tab === "questions" ? (
         <QuestionsEditor
@@ -389,7 +250,7 @@ export function AdminBuilder({
           <section className="admin-new">
             <h3 className="admin-section-title">New recommendation</h3>
             <RecForm
-              initial={blankRow(dimensions)}
+              initial={blankRow(liveDims)}
               dimensions={allDims}
               submitLabel="Add recommendation"
               onSubmit={addRow}

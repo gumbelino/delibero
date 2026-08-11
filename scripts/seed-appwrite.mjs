@@ -122,7 +122,6 @@ async function seedDimensions() {
         description: String(d.description ?? "").trim(),
         matching: Boolean(d.matching),
         order: d.order ?? i,
-        builtin: d.builtin ?? true,
       },
     });
   }
@@ -180,7 +179,6 @@ async function seedQuestions() {
         enabled: q.enabled !== false,
         citation: String(q.citation ?? "").trim(),
         infoKey: String(q.infoKey ?? "").trim(),
-        budgetInput: Boolean(q.budgetInput),
         fields: q.fields ? JSON.stringify(q.fields) : "",
       },
     });

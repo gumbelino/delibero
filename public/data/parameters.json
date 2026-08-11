@@ -7,8 +7,7 @@
       "description": "Deliberation size bands offered in the questionnaire.",
       "matching": true,
       "questionId": "participants",
-      "order": 0,
-      "builtin": true
+      "order": 0
     },
     {
       "key": "level",
@@ -16,8 +15,7 @@
       "description": "IAP2 spectrum levels of public participation.",
       "matching": true,
       "questionId": "engagement-depth",
-      "order": 1,
-      "builtin": true
+      "order": 1
     },
     {
       "key": "mode",
@@ -25,8 +23,7 @@
       "description": "How participants can take part.",
       "matching": true,
       "questionId": "modes",
-      "order": 2,
-      "builtin": true
+      "order": 2
     },
     {
       "key": "criteria",
@@ -34,40 +31,35 @@
       "description": "How participants are selected.",
       "matching": true,
       "questionId": "criteria",
-      "order": 3,
-      "builtin": true
+      "order": 3
     },
     {
       "key": "stage",
       "label": "Stage",
       "description": "Stages of the deliberation a recommendation can strengthen.",
       "matching": false,
-      "order": 4,
-      "builtin": true
+      "order": 4
     },
     {
       "key": "principles",
       "label": "Principles",
       "description": "Deliberative principles a recommendation supports.",
       "matching": false,
-      "order": 5,
-      "builtin": true
+      "order": 5
     },
     {
       "key": "diversity",
       "label": "Diversity",
       "description": "Demographic groups a process aims to reach.",
       "matching": false,
-      "order": 6,
-      "builtin": true
+      "order": 6
     },
     {
       "key": "resources",
       "label": "Resources",
       "description": "Resources the organiser can commit.",
       "matching": false,
-      "order": 7,
-      "builtin": true
+      "order": 7
     }
   ],
   "values": {

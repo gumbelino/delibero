@@ -125,8 +125,6 @@ const TABLES = [
       // Whether this dimension filters results or is a descriptive tag only.
       { key: "matching", type: "boolean", required: false, xdefault: false },
       { key: "order", type: "integer", required: false, xdefault: 0 },
-      // Seeded dimensions the questionnaire references by key; not deletable.
-      { key: "builtin", type: "boolean", required: false, xdefault: false },
     ],
     indexes: [
       { key: "idx_order", type: TablesDBIndexType.Key, columns: ["order"] },
@@ -168,7 +166,6 @@ const TABLES = [
       { key: "enabled", type: "boolean", required: false, xdefault: true },
       { key: "citation", type: "string", size: 64, required: false },
       { key: "infoKey", type: "string", size: 64, required: false },
-      { key: "budgetInput", type: "boolean", required: false, xdefault: false },
       // JSON array of {key,label} for numberPair questions.
       { key: "fields", type: "text", required: false },
     ],
@@ -226,6 +223,36 @@ const TABLES = [
       { key: "completed", type: "boolean", required: false, xdefault: false },
     ],
     indexes: [{ key: "idx_session", type: TablesDBIndexType.Key, columns: ["sessionId"] }],
+  },
+  {
+    id: "access_requests",
+    name: "Access requests",
+    // Who has signed up and asked to become an editor. This table exists
+    // because the client SDK cannot list users — that is a server-only API —
+    // so the admin area has no other way to know who is waiting.
+    //
+    // Any signed-in user may file one; only editors may read the queue. Row
+    // security is on so a requester can still read back their own row (the app
+    // grants it read on the row it creates) and see that the request landed.
+    rowSecurity: true,
+    permissions: [
+      Permission.create(Role.users()),
+      Permission.read(Role.team(EDITORS_TEAM_ID)),
+      Permission.update(Role.team(EDITORS_TEAM_ID)),
+      Permission.delete(Role.team(EDITORS_TEAM_ID)),
+    ],
+    columns: [
+      { key: "userId", type: "string", size: 64, required: true },
+      { key: "email", type: "string", size: 256, required: true },
+      { key: "name", type: "string", size: 256, required: false },
+      // pending → approved (invitation sent) or declined. Kept rather than
+      // deleted so a declined request cannot be re-filed unnoticed.
+      { key: "status", type: "string", size: 16, required: false, xdefault: "pending" },
+    ],
+    indexes: [
+      { key: "idx_user", type: TablesDBIndexType.Key, columns: ["userId"] },
+      { key: "idx_status", type: TablesDBIndexType.Key, columns: ["status"] },
+    ],
   },
 ];
 
@@ -295,7 +322,7 @@ async function main() {
           tableId: table.id,
           name: table.name,
           permissions: table.permissions,
-          rowSecurity: false,
+          rowSecurity: Boolean(table.rowSecurity),
         }),
     );
 

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Deliberation Process Design Tool — guided questionnaire that recommends deliberative process designs.",
+  "description": "Deliberation Process Design Tool \u2014 guided questionnaire that recommends deliberative process designs.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "appwrite:setup": "node scripts/setup-appwrite.mjs",
     "appwrite:seed": "node scripts/seed-appwrite.mjs",
-    "appwrite:add-editor": "node scripts/add-editor.mjs"
+    "appwrite:add-editor": "node scripts/add-editor.mjs",
+    "appwrite:test-email": "node scripts/test-email.mjs"
   },
   "dependencies": {
     "@fortawesome/free-solid-svg-icons": "^7.2.0",

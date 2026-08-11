@@ -69,7 +69,6 @@ The classification axes themselves.
 | `description` | text | Admin-facing explanation |
 | `matching` | boolean, default `false` | `true` = filters results; `false` = descriptive tag only |
 | `order` | integer, default `0` | Display order |
-| `builtin` | boolean, default `false` | Seeded dimensions; the admin UI refuses to delete these |
 
 **Indexes:** `idx_order` (key), `idx_unique_key` (unique on `key`).
 
@@ -114,7 +113,6 @@ The questionnaire. Editable at `/admin` → Questions; there is no `questions.ts
 | `enabled` | boolean, default `true` | Unticking hides a question without deleting answers |
 | `citation` | string(64) | Citation key (see `content.ts`) |
 | `infoKey` | string(64) | Info-panel content key (see `content.ts`) |
-| `budgetInput` | boolean, default `false` | Renders an optional CHF budget field |
 | `fields` | text | JSON `{key,label}[]` for `numberPair` |
 
 **Indexes:** `idx_order` (key), `idx_unique_key` (unique on `key`).
@@ -201,20 +199,40 @@ Enforced by Appwrite server-side. The admin UI's sign-in gate is convenience onl
 | `questions` | anyone | `team:editors` |
 | `responses` | **`team:editors` only** | create: **anyone** · update/delete: `team:editors` |
 | `contacts` | **`team:editors` only** | create: **anyone** · update/delete: `team:editors` |
+| `access_requests` | **`team:editors`** + the requester | create: **any signed-in user** · update/delete: `team:editors` |
 
-Row-level security is off everywhere; these table-level rules are the whole model.
+Row-level security is off everywhere except `access_requests`, where it is on so a requester can read back their own row; these table-level rules are otherwise the whole model.
 
 `responses` and `contacts` are inverted on purpose: any visitor may submit, but nobody can read anyone else's. `contacts` holds personal data — names and email addresses or phone numbers — so this matters more there than anywhere else in the schema. Verified by test: an anonymous client can list recommendations and is refused on both `responses` and `contacts`.
 
 ### Accounts
 
-Anyone may sign up at `/admin`. A new account joins no team, so Appwrite rejects its writes and the app shows a "request access" screen naming the user's email. Grant access with:
+Anyone may sign up at `/admin`. A new account joins no team, so Appwrite rejects its writes and the app shows the "request access" screen. From there they file a request, and an editor approves it at `/admin` → **Manage admins**. See [`admins.md`](admins.md) for that flow and its two prerequisites.
+
+The CLI grant still exists and is the way to create the *first* editor, before anyone can approve anyone:
 
 ```bash
 npm run appwrite:add-editor <email>
 ```
 
-This adds the user to the `editors` team, which takes effect immediately (no email invitation, so no SMTP needed). Verified by test: a fresh account gets 0 memberships, is refused on writes to `questions`, `recommendations` and `dimensions`, and can still read the public knowledge base.
+This adds the user to the `editors` team with the `editor` and `owner` roles, and takes effect immediately (no email invitation, so no SMTP needed). Verified by test: a fresh account gets 0 memberships, is refused on writes to `questions`, `recommendations` and `dimensions`, and can still read the public knowledge base.
+
+---
+
+## `access_requests` — who is waiting for edit access
+
+One row per person who signed up and asked to become an editor.
+
+| Column | Type | Notes |
+|---|---|---|
+| `userId` | string(64), required | The requester's Appwrite account id |
+| `email` | string(256), required | Copied from the account, so the queue is readable without the Users API |
+| `name` | string(256) | Account name, when they gave one |
+| `status` | string(16), default `pending` | `pending` → `approved` or `declined` |
+
+**Indexes:** `idx_user` (key on `userId`), `idx_status` (key on `status`).
+
+**Why this table exists at all.** Listing accounts is a server-only Appwrite API — a browser holding an editor's session cannot enumerate users. Without a record written at the moment somebody asks, the admin area has no way to know that anyone is waiting.
 
 ---
 

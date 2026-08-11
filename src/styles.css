@@ -4,8 +4,6 @@
    Tweak the design tokens in :root to restyle the app.
    ============================================================================= */
 
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
-
 :root {
   /* Core palette — gray scale */
   --color-bg: #f2f2f2;
@@ -35,9 +33,13 @@
   --space: 16px;
   --maxw: 1160px;
 
-  --font:
-    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial,
-    sans-serif;
+  /* Grotesque for headings, labels and controls. */
+  --font-display:
+    "Neue Haas Grotesk Display", "Neue Haas Grotesk Display Pro",
+    "Helvetica Neue", Arial, sans-serif;
+  /* Serif for running prose. */
+  --font-body: Georgia, "Times New Roman", serif;
+  --font: var(--font-display);
 }
 
 * {
@@ -51,11 +53,61 @@ body {
 }
 
 body {
-  font-family: var(--font);
+  font-family: var(--font-body);
+  font-size: 15px;
   color: var(--color-ink);
   background: var(--color-bg);
-  line-height: 1.55;
+  line-height: 1.65;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Headings take the grotesque with tight tracking. */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+/* Controls read as UI, not prose, so they keep the grotesque — buttons and
+   option rows inherit from the serif body otherwise. */
+.btn,
+.option,
+.option-label,
+.sidebar-edit,
+.sidebar-a,
+.ranked-restore,
+.richtext-btn,
+.numberpair-label,
+.contact-card-title,
+.contact-label,
+.rec-tag,
+.admin-tag,
+.admin-badge,
+.ranked-rank,
+.rec-rank,
+.landing-step-num,
+.app-title {
+  font-family: var(--font-display);
+}
+
+/* Eyebrow / meta labels are set in the serif, uppercase and tracked out. */
+.options-group-label,
+.ranked-dismissed-label,
+.sidebar-title,
+.rec-form-label,
+.why-heading,
+.admin-tag-key,
+.sidebar-change,
+.rec-pros strong,
+.rec-cons strong,
+.wizard-progress-label {
+  font-family: var(--font-body);
 }
 
 a {
@@ -79,6 +131,44 @@ a:hover {
   padding: 12px 20px;
   display: flex;
   align-items: center;
+}
+
+/* Signed-in identity and the link back to /admin, pushed to the right. */
+.app-nav-user {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.app-user {
+  font-size: 13px;
+  color: var(--color-primary-ink);
+  opacity: 0.75;
+  white-space: nowrap;
+}
+
+.app-user strong {
+  font-weight: 600;
+}
+
+/* A button on the header's dark ground: outlined, since btn-primary's fill is
+   this bar's own background. The global a:hover would recolour it to that
+   background too, so the hover state is stated explicitly. */
+.btn-nav {
+  padding: 6px 12px;
+  font-size: 13px;
+  color: var(--color-primary-ink);
+  border-color: rgba(255, 255, 255, 0.45);
+  background: none;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn-nav:hover {
+  color: var(--color-primary-ink);
+  border-color: var(--color-primary-ink);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .app-logo {
@@ -209,11 +299,11 @@ a:hover {
 /* ----- Question ----------------------------------------------------------- */
 
 .question-title {
-  font-size: 20px;
+  font-size: 27px;
   font-weight: 700;
-  margin: 0 0 6px;
-  letter-spacing: -0.01em;
-  line-height: 1.3;
+  margin: 0 0 8px;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
 }
 
 .question-help {
@@ -249,7 +339,7 @@ a:hover {
   border-radius: var(--radius-sm);
   padding: 13px 15px;
   cursor: pointer;
-  font: inherit;
+  font-family: var(--font-display);
   color: inherit;
   transition:
     border-color 0.1s ease,
@@ -271,13 +361,18 @@ a:hover {
 }
 
 .option-label {
-  font-weight: 600;
+  font-weight: 400;
   font-size: 15px;
   display: block;
 }
 
+.option-selected .option-label {
+  font-weight: 700;
+}
+
 .option-desc {
   display: block;
+  font-family: var(--font-body);
   color: var(--color-ink-soft);
   font-size: 14px;
   margin-top: 3px;
@@ -338,7 +433,7 @@ a:hover {
 
 .option-chip .option-label {
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 400;
 }
 
 /* ----- Ranked choice ------------------------------------------------------ */
@@ -493,7 +588,7 @@ a:hover {
   background: none;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  font: inherit;
+  font-family: var(--font-display);
   font-size: 12px;
   font-weight: 600;
   color: var(--color-muted);
@@ -505,37 +600,6 @@ a:hover {
 .ranked-restore:hover {
   border-color: var(--color-primary);
   color: var(--color-primary);
-}
-
-/* ----- Budget input ------------------------------------------------------- */
-
-.budget-input-row {
-  margin-top: 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.budget-input-label {
-  font-size: 14px;
-  color: var(--color-ink-soft);
-  font-weight: 500;
-}
-
-.budget-input {
-  font: inherit;
-  font-size: 15px;
-  padding: 8px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  width: 180px;
-  color: var(--color-ink);
-}
-
-.budget-input:focus {
-  outline: 2px solid var(--color-primary-soft);
-  border-color: var(--color-primary);
 }
 
 /* ----- Number pair -------------------------------------------------------- */
@@ -680,7 +744,7 @@ a:hover {
 }
 
 .btn {
-  font: inherit;
+  font-family: var(--font-display);
   font-size: 14px;
   font-weight: 600;
   border-radius: var(--radius-sm);
@@ -789,7 +853,7 @@ a.btn:hover {
   border-radius: var(--radius-sm);
   padding: 9px 11px;
   cursor: pointer;
-  font: inherit;
+  font-family: var(--font-display);
   color: inherit;
 }
 
@@ -991,6 +1055,27 @@ a.btn:hover {
   flex-direction: column;
   gap: 14px;
   margin-top: 20px;
+  align-items: flex-start;
+}
+
+/* The fields fill the column; the submit button keeps its natural width and
+   sits at the left edge, in line with them and with the sign-up prompt. */
+.admin-login-form .rec-form-field {
+  align-self: stretch;
+}
+
+/* .btn-primary carries margin-left: auto, and an auto margin outranks the
+   container's align-items — so it has to be cleared, not just overridden. */
+.admin-login-submit {
+  align-self: flex-start;
+  margin-left: 0;
+}
+
+/* Same fix for the access / verification screens: their action rows hold one
+   button each, and btn-primary's auto margin would strand it on the right,
+   out of line with the Sign out button below it. */
+.admin-login .results-actions .btn-primary {
+  margin-left: 0;
 }
 
 /* ----- Admin: Recommendation Builder -------------------------------------- */
@@ -1094,6 +1179,14 @@ a.btn:hover {
 
 .admin-param-add .rec-form-input {
   flex: 1 1 160px;
+}
+
+/* The derived slug: present but visually secondary to the label it follows. */
+.admin-param-add .admin-param-slug {
+  flex: 0 1 140px;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 12px;
+  color: var(--color-muted);
 }
 
 .admin-dim-form {
@@ -1613,7 +1706,7 @@ a.btn:hover {
 }
 
 .richtext-btn {
-  font: inherit;
+  font-family: var(--font-display);
   font-size: 13px;
   line-height: 1;
   padding: 6px 10px;
@@ -1679,7 +1772,24 @@ a.btn:hover {
 }
 
 .rec-page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
   margin-bottom: 18px;
+}
+
+/* The editor's Edit button sits beside the title without shrinking it. */
+.rec-page-edit {
+  flex: 0 0 auto;
+}
+
+/* Disables every control at once while a save is in flight. */
+.rec-form-fieldset {
+  border: none;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
 }
 
 .rec-page-title {
@@ -1778,20 +1888,45 @@ a.btn:hover {
   margin: 24px 0;
 }
 
-/* ----- Clickable recommendation names ------------------------------------- */
+/* ----- Clickable recommendation cards -------------------------------------
+   The whole card is the target, but the link stays on the name so the
+   accessible name and tab order are the title's — the card grows a
+   transparent overlay from it rather than becoming a link itself. */
 
 .rec-link {
   color: inherit;
   text-decoration: none;
 }
 
-.rec-link:hover {
-  color: var(--color-primary);
-  text-decoration: underline;
+.rec-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius);
+}
+
+.rec-card:has(.rec-link) {
+  position: relative;
+  cursor: pointer;
 }
 
 .rec-card:has(.rec-link):hover {
   border-color: var(--color-primary);
+}
+
+.rec-card:has(.rec-link):hover .rec-link,
+.rec-link:hover {
+  color: var(--color-primary);
+}
+
+/* Keyboard focus lands on the name, so show the ring around the whole target. */
+.rec-card:has(.rec-link:focus-visible) {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.rec-link:focus-visible {
+  outline: none;
 }
 
 /* A button that reads as inline text — used for low-emphasis mode switches
@@ -1843,6 +1978,59 @@ a.btn:hover {
   list-style: none;
   margin: 0;
   padding: 0;
+}
+
+/* ----- Admin: Manage admins ----------------------------------------------- */
+
+.admin-person-list {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-person {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.admin-person:last-child {
+  border-bottom: none;
+}
+
+.admin-person-who {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.admin-person-sub {
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+/* An editor Appwrite will not name for us. */
+.admin-person-anon {
+  font-weight: 400;
+  font-style: italic;
+  color: var(--color-muted);
+}
+
+/* Confirmation of something that succeeded but is not finished — an invitation
+   sent and not yet accepted. */
+.admin-notice {
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-primary-soft);
+  color: var(--color-ink);
+  font-size: 14px;
 }
 
 /* Handled requests recede but stay legible. */
